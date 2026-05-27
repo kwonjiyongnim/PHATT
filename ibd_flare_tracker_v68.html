@@ -1,0 +1,3140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Health Trigger Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Arial, sans-serif; background:#f6f3ef; color:#2b2b2b; }
+    header { background:#5b6f5b; color:white; padding:22px 16px; }
+    header .wrap { max-width:1100px; margin:auto; display:flex; justify-content:space-between; gap:14px; align-items:center; flex-wrap:wrap; }
+    h1 { margin:0 0 6px; font-size:28px; }
+    p { line-height:1.45; }
+    main { max-width:1100px; margin:20px auto; padding:0 14px 34px; display:grid; gap:18px; }
+    .card { background:white; border-radius:18px; padding:18px; box-shadow:0 8px 24px rgba(0,0,0,.08); }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    label { display:block; font-weight:bold; margin-bottom:6px; }
+    input, select, textarea { width:100%; padding:11px; border:1px solid #d8d2ca; border-radius:10px; font-size:14px; background:#fffdfb; }
+    textarea { min-height:72px; resize:vertical; }
+    button { border:0; border-radius:12px; padding:12px 15px; font-weight:bold; cursor:pointer; background:#5b6f5b; color:white; }
+    button.secondary { background:#9b6b54; }
+    button.danger { background:#9b3f3f; }
+    button.ghost { background:#eee7dc; color:#2b2b2b; }
+    .button-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+    .hidden { display:none !important; }
+    .small { font-size:13px; color:#666; }
+    .stat { background:#f7f4ef; border-radius:14px; padding:14px; text-align:center; }
+    .stat strong { display:block; font-size:24px; margin-bottom:4px; }
+    .warning { display:none; background:#fff0ef; border:1px solid #d9847d; color:#7a2222; border-radius:14px; padding:13px; margin-bottom:12px; }
+    .suggestion { display:none; background:#f7f4ef; border-radius:14px; padding:14px; margin-bottom:12px; }
+    .profile-card { display:flex; justify-content:space-between; align-items:center; gap:12px; border:1px solid #eee6dd; border-radius:14px; padding:14px; margin-top:10px; }
+    .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#eee7dc; font-size:12px; margin:3px; }
+    .empty { color:#777; text-align:center; padding:16px; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th,td { padding:10px; border-bottom:1px solid #eee6dd; text-align:left; vertical-align:top; }
+    th { background:#f7f4ef; }
+    .event-card { background:#f7f4ef; border-radius:12px; padding:10px; margin:8px 0; }
+    .event-row { display:grid; grid-template-columns:120px 170px 180px 1fr auto; gap:10px; align-items:end; }
+    @media(max-width:750px){ .grid,.summary,.event-row{grid-template-columns:1fr;} table,thead,tbody,tr,th,td{display:block;} thead{display:none;} tr{border-bottom:1px solid #eee6dd; padding:10px 0;} td{border:0; padding:6px 0;} td:before{content:attr(data-label); display:block; font-weight:bold; color:#555;} }
+  </style>
+
+<style>
+.seamless-events-card{
+  background:#f8f5f2;
+  border-radius:24px;
+  padding:28px;
+  margin-top:24px;
+}
+
+.seamless-events-card h2{
+  margin-top:0;
+  font-size:32px;
+}
+
+.quick-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;
+  margin:18px 0 28px 0;
+}
+
+.quick-chip{
+  border:none;
+  border-radius:999px;
+  padding:16px;
+  background:#e9efff;
+  color:#23408e;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.quick-chip:hover{
+  opacity:.92;
+}
+
+.seamless-row{
+  display:grid;
+  grid-template-columns:140px 180px 1fr 200px;
+  gap:12px;
+  margin-bottom:22px;
+}
+
+.seamless-input{
+  height:52px;
+  border-radius:14px;
+  border:1px solid #d7d7d7;
+  padding:0 14px;
+}
+
+.seamless-add-btn{
+  border:none;
+  border-radius:14px;
+  background:#3b82f6;
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.seamless-subtitle{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:12px;
+}
+</style>
+
+
+<style>
+#adaptiveMedicalPanel{
+  margin-bottom:14px!important;
+}
+
+#adaptiveMedicalPanel h3{
+  font-size:20px!important;
+  margin-bottom:10px!important;
+}
+
+#adaptiveMedicalPanel .small{
+  display:none!important;
+}
+
+.seamless-events-card{
+  margin-top:10px!important;
+}
+
+#eventTracker,
+[id*="eventTracker"]{
+  margin-top:8px!important;
+}
+</style>
+
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1 id="appTitle">Personal Health Trigger Tracker</h1>
+      <p id="appSubtitle">Track IBD, allergy, or sick/fever symptoms by person.</p>
+    </div>
+    <select id="languageSwitcher" style="max-width:190px;border:0;">
+      <option value="en">English</option>
+      <option value="id">Bahasa Indonesia</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <section id="profileScreen" class="card">
+    <h2>Who are we tracking?</h2>
+    <p class="small">Create a profile or open a saved demo profile.</p>
+    <div class="grid">
+      <div><label>Person name</label><input id="profileName" placeholder="Example: May / Kiddo"></div>
+      <div><label>Date of birth</label><input type="date" id="profileDOB"></div>
+      <div><label>Tracker mode</label><select id="profileMode"><option value="IBD">IBD</option><option value="Allergy">Allergy</option><option value="Sick">Sick / Fever</option><option value="Custom">Custom</option></select></div>
+      <div id="customSymptomsWrap" class="hidden"><label>Custom symptoms</label><input id="customSymptoms" placeholder="Example: bloating, nausea, rash"></div>
+    </div>
+    <div class="button-row">
+      <button id="createProfileBtn" type="button">Create / Start</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px;">
+      <h3 style="margin:0;">Saved Profiles</h3>
+      <button id="loadDemoBtn" type="button" class="secondary">Load Demo Profiles</button>
+    </div>
+    <div id="profilesList"></div>
+  </section>
+
+  <section id="trackerScreen" class="hidden">
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div><h2 id="activeProfileTitle">Tracker</h2><p id="activeProfileSubtitle" class="small"></p></div>
+        <div class="button-row" style="margin-top:0;">
+          <button id="editActiveProfileBtn" type="button" class="secondary">Edit Profile</button>
+          <button id="switchProfileBtn" type="button" class="ghost">Switch Profile</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Today’s Check-In</h2>
+      <div id="allergyInfoCard" style="display:none;">
+        <div class="ai-title">⚠️ Known allergies</div>
+        <div id="allergyInfoTags" class="allergy-tags"></div>
+      </div>
+      <div id="warningBox" class="warning"></div>
+      <div id="healthSuggestionBox" class="suggestion"></div>
+      <form id="trackerForm">
+        <div class="grid">
+          <div><label>Date</label><input type="date" id="date" required></div>
+          <div><label>Temperature (°C)</label><input type="number" step="0.1" id="temperature" placeholder="Example: 38.5"></div>
+          <div><label>Bowel movements / BAB count</label><input type="number" min="0" id="stoolCount" value="0" required></div>
+          <div><label>Pain / discomfort level</label><select id="pain"><option value="0">0 - No pain</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5 - Severe</option></select></div>
+          <div class="ibd-field"><label>Blood / mucus</label><select id="bloodMucus"><option value="None">None</option><option value="Mucus only">Mucus only</option><option value="Blood only">Blood only</option><option value="Blood + mucus">Blood + mucus</option></select></div>
+          <div class="allergy-field hidden"><label>How long after eating did symptoms appear?</label><select id="reactionDelay"><option value="Immediately">Immediately (&lt;30 mins)</option><option value="1 hour">~1 hour</option><option value="2-3 hours">2-3 hours</option><option value="4-6 hours">4-6 hours</option><option value="Next day">Next day</option></select></div>
+          <div class="allergy-field hidden"><label>Vomiting reaction</label><select id="vomiting"><option value="None">None</option><option value="Mild nausea">Mild nausea</option><option value="Vomited once">Vomited once</option><option value="Repeated vomiting">Repeated vomiting</option></select></div>
+          <div class="allergy-field hidden"><label>Skin reaction</label><select id="skinReaction"><option value="None">None</option><option value="Mild rash">Mild rash</option><option value="Itchy rash">Itchy rash</option><option value="Hives">Hives</option><option value="Swelling">Swelling</option></select></div>
+          <div class="allergy-field hidden"><label>Breathing issue</label><select id="breathing"><option value="No">No</option><option value="Mild cough">Mild cough</option><option value="Wheezing">Wheezing</option><option value="Shortness of breath">Shortness of breath</option></select></div>
+          <div class="sick-field hidden"><label>Lethargic / weak?</label><select id="lethargic"><option value="No">No</option><option value="Mild">Mild</option><option value="Yes">Yes</option><option value="Very lethargic">Very lethargic</option></select></div>
+          <div class="sick-field hidden"><label>Medicine given time</label><input id="medicineTime" placeholder="Example: 08:00 / 12:00 / 16:00"></div>
+          <div><label>Medicine taken</label><select id="meds"><option value="">Select medicine</option><optgroup label="IBD / Digestive"><option>Salofalk</option><option>Pentasa</option><option>Asacol</option><option>Mezavant</option><option>Entocort</option><option>Budenofalk</option><option>Prednisone</option><option>Methylprednisolone</option><option>Imodium</option><option>Loperamide</option><option>Attapulgite</option><option>Oralit</option><option>Lacto-B</option><option>Interlac</option><option>Zinc</option><option>Probiotic</option></optgroup><optgroup label="Fever / Pain"><option>Paracetamol</option><option>Panadol</option><option>Tempra Drops</option><option>Tempra Syrup</option><option>Praxion Drops</option><option>Ibuprofen</option></optgroup><optgroup label="Allergy / Nausea"><option>Vometa Drops</option><option>Cetirizine Drops</option><option>Ondansetron</option><option>Antihistamine</option><option>Pedialyte</option></optgroup></select></div>
+          <div><label>Medicine dosage</label><input id="medicineDoseInput" placeholder="Example: 5ml / 500mg / 1 sachet"><div id="doseSuggestionText" class="small" style="margin-top:6px;"></div></div>
+          <div><label>Weight (kg)</label><input type="number" step="0.1" id="weightInput" placeholder="Needed for pediatric dose helper"></div>
+          <div><label>Energy level</label><select id="energy"><option>Good</option><option>Okay</option><option>Low</option><option>Very low</option></select></div>
+        </div>
+        <div id="customSymptomInputs" class="grid" style="margin-top:14px;"></div>
+        <div id="customSymptomManager" style="display:none;">
+          <label>Add custom symptom</label>
+          <div class="grid">
+            <input id="newCustomSymptom" placeholder="Example: bloating, trapped gas, itchy ears">
+            <button type="button" id="addCustomSymptomBtn" class="secondary">+ Add Symptom</button>
+          </div>
+          <div id="customSymptomList" class="small" style="margin-top:10px;"></div>
+        </div>
+        <div id="eventTracker" style="margin-top:14px;background:#f7f4ef;border-radius:14px;padding:14px;">
+          <h3 style="margin-top:0;">Real-time Events</h3>
+          <p class="small">Add multiple stool/reaction/fever/custom events throughout the day. They will merge into the same date entry.</p>
+          <div class="event-row">
+            <div><label>Time</label><input id="eventTime" placeholder="14:00"></div>
+            <div><label>Event type</label><select id="eventType"><option>Stool</option><option>Allergy reaction</option><option>Fever / temperature</option><option>Medicine</option><option>Custom symptom</option><option>Food note</option></select></div>
+            <div><label>Stool type</label><select id="eventStoolType"><option value="">N/A</option><option>Hard pellets / constipation</option><option>Lumpy hard stool</option><option>Dry clay-like stool</option><option>Normal formed stool</option><option>Soft but formed</option><option>Mushy / fluffy edges</option><option>Liquid with particles</option><option>Fully watery</option><option>No bowel movement</option></select></div>
+            <div><label>Details</label><input id="eventDetails" placeholder="Example: watery + urgency / itchy rash after fish / 39.1°C"></div>
+            <button type="button" id="addEventBtn" class="secondary">+ Add Event</button>
+          </div>
+          <div id="pendingEventsList" style="margin-top:10px;"></div>
+        </div>
+        <div id="trackerAllergyBox" style="margin-top:14px;background:#fff7f6;border:1px solid #f0c8c4;border-radius:14px;padding:14px;">
+          <label style="color:#7a2222;">Known allergies (per profile)</label>
+          <p class="small" style="margin:2px 0 8px;">Type allergies separated by commas, e.g. <i>udang, kacang, susu, telur</i>. Click × to remove.</p>
+          <div class="allergy-input-row">
+            <input id="trackerAllergyInput" placeholder="Example: udang, kacang, susu">
+            <button type="button" id="trackerAllergyAddBtn" class="secondary">+ Add</button>
+          </div>
+          <div id="trackerAllergyTags" class="allergy-tags"></div>
+        </div>
+        <div style="margin-top:14px;"><label>Food / drinks today</label><div class="grid" style="margin-top:10px;"><div><label>Breakfast</label><textarea id="breakfast" placeholder="Example: eggs, toast, coffee"></textarea></div><div><label>Lunch</label><textarea id="lunch" placeholder="Example: rice, chicken soup"></textarea></div><div><label>Dinner</label><textarea id="dinner" placeholder="Example: fish, vegetables"></textarea></div><div><label>Snacks / drinks</label><textarea id="snacks" placeholder="Example: KitKat, Pocari, milk tea"></textarea></div></div></div>
+        <div style="margin-top:14px;"><label>Notes</label><textarea id="notes" placeholder="Example: urgency, rash, vomiting timing, medicine response..."></textarea></div>
+        <div class="button-row"><button type="submit">Save Entry</button><button type="button" id="exportBtn" class="secondary">Export CSV</button><button type="button" id="clearProfileBtn" class="danger">Clear Profile Data</button></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h2 id="summaryTitle">Summary</h2>
+        <div>
+          <label style="font-weight:normal;font-size:13px;color:#666;margin-bottom:4px;">Period</label>
+          <select id="summaryPeriod" style="max-width:220px;">
+            <option value="1">Today</option>
+            <option value="2">Last 2 days</option>
+            <option value="7">Last 7 days</option>
+            <option value="14" selected>Last 14 days</option>
+            <option value="30">Last 1 month</option>
+            <option value="90">Last 3 months</option>
+            <option value="180">Last 6 months</option>
+            <option value="365">Last 1 year</option>
+            <option value="all">All data</option>
+          </select>
+        </div>
+      </div>
+      <div class="summary" id="summaryCards"></div>
+      <div id="chartsContainer" style="margin-top:8px;"></div>
+    </section>
+    <section class="card"><h2>Food Intelligence</h2><p class="small">Pattern helper only. Click a food to see detected properties.</p><div class="grid"><div><h3>Safe / Recovery Foods</h3><div id="safeFoods"></div></div><div><h3>Possible Trigger / Limit Foods</h3><div id="unsafeFoods"></div></div></div><div style="margin-top:22px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><div><h3>What Should I Eat Next?</h3><p class="small">Suggestions based on tolerated foods, symptom trends, meal rotation, and exploratory foods.</p></div><button type="button" id="rerollFoodSuggestionBtn" class="secondary">🔄 Generate Another</button></div><div id="foodSuggestions"></div></div><div style="margin-top:28px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><div><h3>What Should I Cook Today?</h3><p class="small">Input ingredients you currently have at home.</p></div><button type="button" id="rerollCookSuggestionBtn" class="secondary">🔄 Generate Another</button></div><textarea id="ingredientInput" placeholder="Example: rice, eggs, chicken, cheese, shrimp, milk"></textarea><div class="button-row"><button type="button" id="cookSuggestionBtn" class="secondary">Suggest Recipes</button></div><div id="cookSuggestions" style="margin-top:14px;"></div></div><div style="margin-top:28px;"><h3>Can I Eat This?</h3><p class="small">Restaurant/cafe food checker based on your mode and historical triggers.</p><input id="restaurantFoodInput" placeholder="Example: shrimp aglio olio, matcha latte, dragon hot pot mala" /><div class="button-row"><button type="button" id="checkRestaurantFoodBtn" class="secondary">Analyze Food</button></div><div id="restaurantFoodResult" style="margin-top:14px;"></div></div><div id="foodInsightBox" style="margin-top:20px;display:none;background:#f7f4ef;padding:16px;border-radius:14px;"></div></section>
+    <section class="card"><h2>History</h2><div id="history"></div></section>
+  </section>
+</main>
+
+<div id="editProfileModal" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:16px;">
+  <div class="card" style="max-width:560px;width:100%;max-height:90vh;overflow:auto;">
+    <h2 style="margin-top:0;">Edit Profile</h2>
+    <input type="hidden" id="editProfileId">
+    <div class="grid">
+      <div><label>Person name</label><input id="editProfileName"></div>
+      <div><label>Date of birth</label><input type="date" id="editProfileDOB"></div>
+      <div><label>Tracker mode</label><select id="editProfileMode"><option value="IBD">IBD</option><option value="Allergy">Allergy</option><option value="Sick">Sick / Fever</option><option value="Custom">Custom</option></select></div>
+    </div>
+    <div style="margin-top:14px;background:#fff7f6;border:1px solid #f0c8c4;border-radius:14px;padding:14px;">
+      <label style="color:#7a2222;">Known allergies</label>
+      <p class="small" style="margin:2px 0 8px;">Type separated by commas, e.g. <i>udang, kacang, susu</i>. Click × to remove.</p>
+      <div class="allergy-input-row">
+        <input id="editAllergyInput" placeholder="Example: udang, kacang, susu">
+        <button type="button" id="editAllergyAddBtn" class="secondary">+ Add</button>
+      </div>
+      <div id="editAllergyTags" class="allergy-tags"></div>
+    </div>
+    <div class="button-row">
+      <button type="button" id="editProfileSaveBtn">Save Changes</button>
+      <button type="button" id="editProfileCancelBtn" class="ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var STORAGE_KEY='healthTriggerProfiles_v2';
+  var ACTIVE_KEY='healthTriggerActiveProfile_v2';
+  var $=function(id){return document.getElementById(id);};
+  var dynamicCharts=[];
+  var pendingEvents=[];
+
+  var supportiveFoods=['pocari','oralit','electrolyte','water','air putih','soup','porridge','banana','coconut water','air kelapa','fish soup','chicken soup','steamed eggs','rice porridge','plain rice','rice','nasi putih','nasi','watermelon juice','smoothie','oatmeal'];
+
+  var foodAliases={
+    'ayam geprek':['fried','very spicy','high oil'],
+    'ayam cabe ijo':['spicy','high oil'],
+    'seblak':['very spicy','high oil','processed food'],
+    'gacoan':['spicy','high oil','processed food'],
+    'dragon hot pot':['very spicy','high oil'],
+    'hotpot mala':['very spicy','high oil'],
+    'mala xiang guo':['very spicy','high oil'],
+    'mie goreng jawa':['fried','high oil','processed food'],
+    'gorengan':['fried','high fat','high oil'],
+    'bakwan':['fried','high oil'],
+    'mie ayam':['processed food','high sodium'],
+    'nasi uduk':['high fat','high oil'],
+    'opor ayam':['coconut milk','high fat'],
+    'light opor ayam':['coconut milk','high fat','protein'],
+    'kopi susu':['caffeine','dairy'],
+    'matcha latte':['caffeine','dairy'],
+    'boba':['high sugar','dairy'],
+    'milk tea':['high sugar','dairy','caffeine'],
+    'ramen':['high sodium','high oil','gluten'],
+    'katsu':['fried','high oil'],
+    'karaage':['fried','high oil'],
+    'tempura':['fried','high oil'],
+    'fried chicken':['fried','high oil'],
+    'fried rice':['high oil'],
+    'croffle':['high fat','dairy','gluten'],
+    'martabak':['high fat','high oil','gluten'],
+    'oreo':['processed food','high sugar','gluten'],
+    'kitkat':['processed food','high sugar','dairy'],
+    'bengbeng':['processed food','high sugar'],
+    'ice cream':['dairy','high sugar'],
+    'sosis':['processed food','high sodium'],
+    'nugget':['processed food','fried'],
+    'bakso':['processed food','high sodium'],
+    'chikuwa':['processed food'],
+    'crab stick':['processed seafood','seafood allergen'],
+    'fish tofu':['processed seafood','seafood allergen'],
+    'shrimp':['seafood allergen'],
+    'udang':['seafood allergen'],
+    'shellfish':['shellfish allergen'],
+    'kerang':['shellfish allergen'],
+    'salmon':['fish','protein'],
+    'grilled salmon':['fish','protein','easy digestion'],
+    'fish soup':['hydrating','easy digestion','protein'],
+    'chicken soup':['hydrating','easy digestion'],
+    'porridge':['easy digestion','hydrating'],
+    'banana':['easy digestion'],
+    'banana smoothie':['hydrating','easy digestion'],
+    'pocari':['electrolyte','hydrating'],
+    'oralit':['electrolyte','hydrating'],
+    'coconut water':['electrolyte','hydrating'],
+    'watermelon':['hydrating'],
+    'watermelon juice':['hydrating'],
+    'oatmeal':['easy digestion'],
+    'steamed eggs':['easy digestion','protein'],
+    'pizza':['dairy','gluten','tomato','fat'],'seafood pizza':['seafood allergen','dairy','gluten'],'spaghetti':['gluten','tomato'],'carbonara':['dairy','fat','gluten'],'burger':['fat','processed meat','gluten'],'fries':['fried','high fat'],'gorengan':['fried','high fat'],'bakwan':['fried','oil'],'gorengan tahu':['fried','soy'],'nasi uduk':['coconut milk','fat'],'nasi kuning':['coconut milk','fat'],'bakso':['processed meat','high sodium'],'mie ayam':['gluten','oil','high sodium'],'mie goreng jawa':['gluten','oil','sweet soy'],'mie godog':['gluten','high sodium'],'nasi goreng':['oil','high sodium'],'soto ayam':['high sodium'],'sop buntut':['high fat'],'pempek':['fish','fried'],'siomay':['processed fish','peanut allergen'],'batagor':['fried','fish','peanut allergen'],'seblak':['spicy','processed food'],'indomie':['high sodium','processed food','oil'],
+    'kintan':['high fat','charred food','processed sauce'],'gyukaku':['high fat','charred food','processed sauce'],'yakiniku':['high fat','charred food'],'wagyu':['high fat'],'bbq':['charred food','high fat'],'ayam goreng':['fried','high fat'],'ayam bakar':['charred food','sweet sauce'],'bebek goreng':['fried','high fat'],'bebek bakar':['charred food','high fat'],'sate ayam':['charred food','peanut allergen'],'sate kambing':['charred food','high fat'],'martabak':['high fat','sugar','dairy'],'dimsum':['processed food','high sodium'],'sushi':['seafood allergen'],'sashimi':['seafood allergen'],'tempura':['fried','seafood allergen'],'karaage':['fried','high fat'],'katsu':['fried','high fat'],
+    'hotpot':['high sodium','spices'],'dragon hot pot':['high sodium','spicy broth','processed ingredients'],'chongqing':['very spicy','high oil','spicy broth'],'mala':['very spicy','numbing spice','high oil'],'malatang':['spicy broth','high sodium'],'tom yum':['acidic','spicy'],'fish tofu':['processed seafood'],'crab stick':['processed seafood'],'enoki':['high fiber'],'chili oil':['high oil','spicy'],
+    'sosis':['processed meat','high sodium','preservatives'],'sausage':['processed meat','high sodium','preservatives'],'nugget':['processed food','fried','preservatives'],'ham':['processed meat','high sodium'],'bacon':['processed meat','high fat','high sodium'],'pepperoni':['processed meat','high fat'],'frozen food':['processed food','high sodium'],'otakotak':['processed seafood'],'chikuwa':['processed seafood'],'fishcake':['processed seafood'],'corndog':['processed meat','fried','gluten'],
+    'vanilla ice cream':['dairy','sugar','cold food'],'chocolate ice cream':['dairy','sugar','caffeine'],'oreo':['gluten','sugar','processed snack'],'chitato':['processed snack','high sodium'],'lays':['processed snack','high sodium'],'qtela':['processed snack','fried'],'taro':['processed snack','fried'],'ciki':['processed snack','high sodium'],'doritos':['processed snack','high sodium'],'pringles':['processed snack','high sodium'],'bengbeng':['sugar','dairy'],'silverqueen':['sugar','dairy','nut allergen'],'kitkat':['sugar','dairy'],'yakult':['dairy','sugar'],'ultra milk':['dairy'],'cimory':['dairy'],
+    'lele':['fish'],'lele goreng':['fried','fish'],'lele bumbu kuning':['spices','fish'],'ikan bakar':['charred food','fish'],'gurame bakar':['charred food','fish'],'salmon':['fish'],'tuna':['fish'],'udang':['seafood allergen'],'shrimp':['seafood allergen'],'cumi':['seafood allergen'],'kerang':['shellfish allergen'],'lobster':['shellfish allergen'],'kepiting':['shellfish allergen'],'crab':['shellfish allergen'],
+    'water':['hydrating'],'air putih':['hydrating'],'pocari':['electrolyte','hydrating'],'pocari sweat':['electrolyte','hydrating'],'air kelapa':['electrolyte','hydrating'],'coconut water':['electrolyte','hydrating'],'jus alpukat':['high fat','fiber'],'jus mangga':['sugar','fiber'],'jus stroberi':['acidic','fiber'],'jus pisang':['easy digestion'],'jus jeruk':['acidic','vitamin c'],'teh manis':['sugar','caffeine'],'soda':['carbonated','sugar'],'latte':['dairy','caffeine'],'kopi susu':['dairy','caffeine','sugar'],'coffee':['caffeine'],'kopi':['caffeine'],'toast':['dry texture','low hydration'],'porridge':['easy digestion','hydrating'],'soup':['hydrating','easy digestion'],'banana':['easy digestion'],'rice':['easy digestion'],'telur':['egg allergen'],'eggs':['egg allergen'],'milk':['dairy','lactose'],'susu':['dairy','lactose'],'cheese':['dairy','fat'],'chocolate':['sugar','dairy','caffeine'],'coklat':['sugar','dairy','caffeine'],'spicy':['spicy','capsaicin'],'pedas':['spicy','capsaicin']
+  };
+
+  function esc(s){return String(s||'').replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+  function profiles(){return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}
+  function saveProfiles(p){localStorage.setItem(STORAGE_KEY,JSON.stringify(p));}
+  function activeId(){return localStorage.getItem(ACTIVE_KEY);}
+  function setActive(id){localStorage.setItem(ACTIVE_KEY,id);}
+  function activeProfile(){return profiles().find(function(p){return p.id===activeId();});}
+  function fmt(d){return d.toISOString().split('T')[0];}
+  function dateOffset(days){var d=new Date(); d.setDate(d.getDate()-days); return fmt(d);}
+  function calcAge(dob){if(!dob)return ''; var b=new Date(dob), t=new Date(), a=t.getFullYear()-b.getFullYear(), m=t.getMonth()-b.getMonth(); if(m<0||(m===0&&t.getDate()<b.getDate()))a--; return a;}
+
+  function generateDemoProfiles(){
+    var ibd=[];
+    var flareMeals=[
+      {breakfast:'kopi susu + toast',lunch:'ayam geprek + rice',dinner:'mie goreng jawa',snacks:'kitkat + milk tea'},
+      {breakfast:'nasi uduk + gorengan',lunch:'dragon hot pot mala',dinner:'fried chicken + sambal',snacks:'oreo + ice cream'},
+      {breakfast:'mie ayam',lunch:'gyukaku yakiniku',dinner:'seblak',snacks:'coffee + chocolate'},
+      {breakfast:'toast + coffee',lunch:'ayam bakar + sambal',dinner:'fried noodles',snacks:'bengbeng + latte'},
+      {breakfast:'croffle + coffee',lunch:'kintan bbq',dinner:'bakso + chili sauce',snacks:'yakult + chips'},
+      {breakfast:'nasi kuning',lunch:'mie goreng jawa',dinner:'ayam goreng',snacks:'ice cream + oreo'},
+      {breakfast:'martabak',lunch:'hotpot mala',dinner:'sate ayam + sambal',snacks:'milk tea + kitkat'}
+    ];
+
+    var recoveryMeals=[
+      {breakfast:'banana smoothie',lunch:'fish soup + rice',dinner:'porridge',snacks:'pocari'},
+      {breakfast:'rice porridge',lunch:'chicken soup + rice',dinner:'steamed eggs + rice',snacks:'water + crackers'},
+      {breakfast:'banana + toast',lunch:'grilled fish + rice',dinner:'opor ayam + rice',snacks:'coconut water'},
+      {breakfast:'oatmeal + banana',lunch:'samyang normal portion',dinner:'rice soup + steamed chicken',snacks:'electrolyte drink'},
+      {breakfast:'smoothie bowl',lunch:'seblak level 2',dinner:'fish soup + rice',snacks:'watermelon juice'},
+      {breakfast:'scrambled eggs + toast',lunch:'gacoan level 1',dinner:'steamed chicken + rice',snacks:'pocari + banana'},
+      {breakfast:'banana pancakes',lunch:'light opor ayam + rice',dinner:'grilled fish + rice',snacks:'coconut water + crackers'}
+    ];
+
+    for(var i=0;i<14;i++){
+      var day=i+1, med=day>=8, stool=med?Math.max(1,5-Math.floor((day-8)/2)):Math.min(10,4+i), pain=med?Math.max(1,3-Math.floor((day-8)/3)):Math.min(5,2+Math.floor(i/2));
+      var mealSet=med?recoveryMeals[i%recoveryMeals.length]:flareMeals[i%flareMeals.length];
+      ibd.push({date:dateOffset(13-i),temperature:'',stoolCount:String(stool),bloodMucus:med?(day<10?'Mucus only':'None'):(day>4?'Blood + mucus':'Mucus only'),pain:String(pain),reactionDelay:'',vomiting:'None',skinReaction:'None',breathing:'No',meds:med?'Salofalk':'',medicineDoseInput:med?'1 sachet':'',medicineTime:'',lethargic:'',energy:med?(day>11?'Good':'Okay'):'Low',breakfast:mealSet.breakfast,lunch:mealSet.lunch,dinner:mealSet.dinner,snacks:mealSet.snacks,notes:med?(day>=11?'Stable + medicated phase. Triggering food exposure logged with milder symptoms than active flare; keep portion control and monitor carefully.':'Symptoms improving after starting medication.'):'Flare worsening before medication started.',customValues:{},severity:med?(day>11?'Low':'Medium'):(day>4?'High':'Medium')});
+    }
+    return [
+      {id:'dummy-ibd',name:'May',dob:'1998-04-10',mode:'IBD',customSymptoms:[],allergies:['dairy','spicy food'],entries:ibd},
+      {id:'dummy-allergy',name:'Kiddo',dob:'2022-09-15',mode:'Allergy',customSymptoms:[],allergies:['shrimp','seafood','egg'],entries:[
+        {date:dateOffset(6),temperature:'36.9',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'banana pancakes',lunch:'rice, chicken soup',dinner:'porridge',snacks:'water + pocari',notes:'Normal day.',customValues:{},severity:'Low'},
+        {date:dateOffset(5),temperature:'37.8',stoolCount:'2',bloodMucus:'None',pain:'2',reactionDelay:'2-3 hours',vomiting:'Vomited once',skinReaction:'None',breathing:'No',meds:'Vometa Drops',medicineDoseInput:'0.3ml',medicineTime:'15:00',lethargic:'Mild',energy:'Low',breakfast:'toast + milk',lunch:'shrimp fried rice + crab stick',dinner:'porridge',snacks:'pocari + yakult',notes:'Vomited around 2.5 hours after shrimp.',customValues:{},severity:'High'},
+        {date:dateOffset(4),temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'scrambled eggs',lunch:'rice + fish soup',dinner:'banana',snacks:'water + watermelon juice',notes:'No symptoms.',customValues:{},severity:'Low'},
+        {date:dateOffset(3),temperature:'37.4',stoolCount:'3',bloodMucus:'None',pain:'2',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Itchy rash',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'20:00',lethargic:'Mild',energy:'Okay',breakfast:'banana smoothie',lunch:'rice + chicken soup',dinner:'chocolate ice cream',snacks:'oreo + milk',notes:'Rash started shortly after ice cream + oreo.',customValues:{},severity:'Medium'},
+        {date:dateOffset(2),temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'porridge',lunch:'chicken soup',dinner:'rice + ayam bakar',snacks:'watermelon juice + pocari',notes:'Normal recovery day.',customValues:{},severity:'Low'},
+        {date:dateOffset(1),temperature:'37.9',stoolCount:'2',bloodMucus:'None',pain:'3',reactionDelay:'2-3 hours',vomiting:'Repeated vomiting',skinReaction:'None',breathing:'No',meds:'Vometa Drops',medicineDoseInput:'0.3ml',medicineTime:'16:00',lethargic:'Yes',energy:'Low',breakfast:'banana',lunch:'fishball noodle + fish tofu',dinner:'porridge',snacks:'pocari + electrolyte drink',notes:'Possible seafood reaction from fishball.',customValues:{},severity:'High'},
+        {date:dateOffset(0),temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'toast',lunch:'rice + chicken soup',dinner:'banana',snacks:'water + coconut water',notes:'No symptoms today.',customValues:{},severity:'Low'}
+      ]},
+      {id:'dummy-sick',name:'Aiden',dob:'2021-01-04',mode:'Sick',customSymptoms:[],allergies:['peanut'],entries:[
+        {date:dateOffset(3),temperature:'39.5',stoolCount:'1',bloodMucus:'None',pain:'3',reactionDelay:'',vomiting:'None',skinReaction:'None',breathing:'No',meds:'Tempra Drops',medicineDoseInput:'0.8ml every 4 hours',medicineTime:'08:00 / 12:00 / 16:00 / 20:00',lethargic:'Yes',energy:'Very low',breakfast:'toast + milk',lunch:'porridge + soup',dinner:'chicken soup',snacks:'pocari + oralit',notes:'Fever dropped to 38.1 around 2 hours after medicine, then increased again to 39+ before next dose.',customValues:{},severity:'High'},
+        {date:dateOffset(2),temperature:'39.3',stoolCount:'1',bloodMucus:'None',pain:'2',reactionDelay:'',vomiting:'None',skinReaction:'None',breathing:'No',meds:'Tempra Drops',medicineDoseInput:'0.8ml every 4 hours',medicineTime:'08:00 / 12:00 / 16:00 / 20:00',lethargic:'Yes',energy:'Low',breakfast:'banana smoothie',lunch:'porridge + steamed eggs',dinner:'soup',snacks:'electrolyte drink + pocari',notes:'Still spiking fever repeatedly despite medication.',customValues:{},severity:'High'},
+        {date:dateOffset(1),temperature:'39.1',stoolCount:'1',bloodMucus:'None',pain:'2',reactionDelay:'',vomiting:'None',skinReaction:'None',breathing:'No',meds:'Tempra Drops',medicineDoseInput:'0.8ml every 4 hours',medicineTime:'08:00 / 12:00 / 16:00 / 20:00',lethargic:'Mild',energy:'Low',breakfast:'porridge',lunch:'rice + fish soup',dinner:'banana',snacks:'pocari + coconut water',notes:'Temporary fever relief after medicine but fever keeps returning.',customValues:{},severity:'High'},
+        {date:dateOffset(0),temperature:'39.2',stoolCount:'1',bloodMucus:'None',pain:'2',reactionDelay:'',vomiting:'None',skinReaction:'None',breathing:'No',meds:'Tempra Drops',medicineDoseInput:'0.8ml every 4 hours',medicineTime:'08:00 / 12:00 / 16:00 / 20:00',lethargic:'Yes',energy:'Low',breakfast:'toast',lunch:'porridge + soup',dinner:'chicken soup',snacks:'electrolyte drink + oralit',notes:'Day 4 persistent fever. Suggest doctor evaluation for possible bacterial or viral infection.',customValues:{},severity:'High'}
+      ]}
+    ];
+  }
+
+  function renderProfiles(){
+    var list=profiles();
+    $('profilesList').innerHTML=list.length?list.map(function(p){return '<div class="profile-card"><div><strong>'+esc(p.name)+'</strong><br><span class="small">'+esc(p.mode)+(p.dob?' • Age '+calcAge(p.dob):'')+(Array.isArray(p.allergies)&&p.allergies.length?' • ⚠️ '+p.allergies.length+' allergies':'')+'</span></div><div class="button-row" style="margin-top:0"><button type="button" data-open="'+p.id+'">Open</button><button type="button" class="secondary" data-edit="'+p.id+'">Edit</button><button type="button" class="danger" data-delete="'+p.id+'">Delete</button></div></div>';}).join(''):'<div class="empty">No saved profiles yet.</div>';
+  }
+
+  function loadDemoProfiles(){
+    var demoIds=['dummy-ibd','dummy-allergy','dummy-sick','allergy-recovery-demo'];
+    var keep=profiles().filter(function(p){return demoIds.indexOf(p.id)===-1;});
+    var baseDemos=generateDemoProfiles();
+    var extraDemos=Array.isArray(window.additionalDemoProfiles)?window.additionalDemoProfiles:[];
+    saveProfiles(keep.concat(baseDemos).concat(extraDemos));
+    renderProfiles();
+    alert('Demo profiles loaded.');
+  }
+
+  function createProfile(){
+    var name=$('profileName').value.trim(); if(!name){alert('Please input a name first.');return;}
+    var p={id:'p-'+Date.now(),name:name,dob:$('profileDOB').value,mode:$('profileMode').value,customSymptoms:$('customSymptoms').value.split(',').map(function(s){return s.trim();}).filter(Boolean),entries:[],allergies:[]};
+    var list=profiles(); list.push(p); saveProfiles(list); setActive(p.id); openTracker();
+  }
+
+  /* ── EDIT PROFILE ── */
+  var editAllergyDraft=[];
+  function openEditProfile(id){
+    var p=profiles().find(function(x){return x.id===id;});
+    if(!p) return;
+    $('editProfileId').value=p.id;
+    $('editProfileName').value=p.name||'';
+    $('editProfileDOB').value=p.dob||'';
+    $('editProfileMode').value=p.mode||'IBD';
+    editAllergyDraft=(Array.isArray(p.allergies)?p.allergies.slice():[]);
+    renderEditAllergyTags();
+    $('editProfileModal').style.display='flex';
+  }
+  function closeEditProfile(){ $('editProfileModal').style.display='none'; }
+  function renderEditAllergyTags(){
+    if(window.renderAllergyTags){
+      window.renderAllergyTags($('editAllergyTags'), editAllergyDraft, function(item){
+        editAllergyDraft=editAllergyDraft.filter(function(a){return a!==item;});
+        renderEditAllergyTags();
+      });
+    }
+  }
+  function addEditAllergy(){
+    var input=$('editAllergyInput');
+    var parsed=(window.parseAllergyInput?window.parseAllergyInput(input.value):[]);
+    if(!parsed.length) return;
+    parsed.forEach(function(a){ if(editAllergyDraft.indexOf(a)===-1) editAllergyDraft.push(a); });
+    input.value='';
+    renderEditAllergyTags();
+  }
+  function saveEditProfile(){
+    var id=$('editProfileId').value;
+    var list=profiles();
+    var p=list.find(function(x){return x.id===id;});
+    if(!p) return;
+    var newName=$('editProfileName').value.trim();
+    if(!newName){ alert('Name cannot be empty.'); return; }
+    var newMode=$('editProfileMode').value;
+    if(newMode!==p.mode){
+      if(!confirm('⚠️ You are changing the tracker mode from "'+p.mode+'" to "'+newMode+'".\n\nExisting logged data stays, but some fields, summary cards, and graphs will change to match the new mode. Continue?')){
+        return;
+      }
+    }
+    p.name=newName;
+    p.dob=$('editProfileDOB').value;
+    p.mode=newMode;
+    p.allergies=editAllergyDraft.slice();
+    saveProfiles(list);
+    closeEditProfile();
+    renderProfiles();
+    // if editing the active profile, refresh tracker view
+    if(activeId()===id){ openTracker(); }
+  }
+
+
+  function renderCustomSymptomList(p){
+    var list=$('customSymptomList');
+    if(!list) return;
+    var symptoms=p.customSymptoms||[];
+    list.innerHTML=symptoms.length
+      ? '<strong>Current custom symptoms:</strong> '+symptoms.map(function(s){return '<span class="pill">'+esc(s)+'</span>';}).join(' ')
+      : 'No custom symptoms yet.';
+  }
+
+  function setupMode(p){
+    document.querySelectorAll('.allergy-field').forEach(function(el){el.classList.toggle('hidden',p.mode!=='Allergy');});
+    document.querySelectorAll('.sick-field').forEach(function(el){el.classList.toggle('hidden',p.mode!=='Sick');});
+    document.querySelectorAll('.ibd-field').forEach(function(el){el.classList.toggle('hidden',p.mode==='Allergy');});
+    var wrap=$('customSymptomInputs'); wrap.innerHTML='';
+    (p.customSymptoms||[]).forEach(function(s){
+      var id='custom_'+s.replace(/[^a-z0-9]/gi,'_');
+      wrap.innerHTML+='<div><label>'+esc(s)+' level</label><select id="'+id+'" data-symptom="'+esc(s)+'"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>';
+    });
+    renderCustomSymptomList(p);
+    renderPendingEvents();
+    renderTrackerAllergies(p);
+  }
+
+  function renderTrackerAllergies(p){
+    var list=(p && Array.isArray(p.allergies))?p.allergies:[];
+    // editor inside form
+    if(window.renderAllergyTags){
+      window.renderAllergyTags($('trackerAllergyTags'), list, function(item){
+        var profs=profiles();
+        var target=profs.find(function(x){return x.id===p.id;});
+        if(!target) return;
+        target.allergies=(target.allergies||[]).filter(function(a){return a!==item;});
+        saveProfiles(profs);
+        renderTrackerAllergies(target);
+      });
+    }
+    // info card after Today's Check-In
+    var card=$('allergyInfoCard');
+    if(card){
+      if(list.length){
+        card.style.display='block';
+        if(window.renderAllergyTags) window.renderAllergyTags($('allergyInfoTags'), list, null);
+      }else{
+        card.style.display='none';
+      }
+    }
+  }
+
+  function addTrackerAllergy(){
+    var p=activeProfile(); if(!p) return;
+    var input=$('trackerAllergyInput');
+    var parsed=(window.parseAllergyInput?window.parseAllergyInput(input.value):[]);
+    if(!parsed.length){ alert('Type at least one allergy first.'); return; }
+    var profs=profiles();
+    var target=profs.find(function(x){return x.id===p.id;});
+    if(!target) return;
+    target.allergies=target.allergies||[];
+    parsed.forEach(function(a){ if(target.allergies.indexOf(a)===-1) target.allergies.push(a); });
+    saveProfiles(profs);
+    input.value='';
+    renderTrackerAllergies(target);
+  }
+
+  function addCustomSymptom(){
+    var p=activeProfile(); if(!p) return;
+    var input=$('newCustomSymptom');
+    var name=(input.value||'').trim();
+    if(!name){alert('Input symptom name first.');return;}
+    var list=profiles();
+    var target=list.find(function(x){return x.id===activeId();});
+    if(!target) return;
+    target.customSymptoms=target.customSymptoms||[];
+    if(target.customSymptoms.map(function(s){return s.toLowerCase();}).indexOf(name.toLowerCase())===-1){
+      target.customSymptoms.push(name);
+      saveProfiles(list);
+    }
+    input.value='';
+    setupMode(target);
+  }
+
+  function currentEventTime(){
+    var d=new Date();
+    return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function addPendingEvent(){
+    var t=($('eventTime').value||currentEventTime()).trim();
+    var type=$('eventType').value;
+    var stoolType=$('eventStoolType').value;
+    var details=($('eventDetails').value||'').trim();
+    if(!details && !stoolType){alert('Add event details or stool type first.');return;}
+    pendingEvents.push({time:t,type:type,stoolType:stoolType,details:details});
+    $('eventTime').value='';
+    $('eventDetails').value='';
+    $('eventStoolType').value='';
+    renderPendingEvents();
+  }
+
+  function removePendingEvent(idx){
+    pendingEvents.splice(idx,1);
+    renderPendingEvents();
+  }
+
+  function renderPendingEvents(){
+    var box=$('pendingEventsList'); if(!box) return;
+    if(!pendingEvents.length){box.innerHTML='<div class="small">No pending events yet.</div>';return;}
+    box.innerHTML=pendingEvents.map(function(ev,i){
+      return '<div class="event-card"><strong>'+esc(ev.time)+' • '+esc(ev.type)+'</strong>'+(ev.stoolType?' <span class="pill">'+esc(ev.stoolType)+'</span>':'')+'<br><span class="small">'+esc(ev.details||'-')+'</span> <button type="button" class="danger" style="padding:6px 9px;margin-left:8px" data-remove-event="'+i+'">Remove</button></div>';
+    }).join('');
+  }
+
+  function openTracker(){var p=activeProfile(); if(!p){backToProfiles();return;} $('profileScreen').classList.add('hidden'); $('trackerScreen').classList.remove('hidden'); $('activeProfileTitle').textContent=p.name+"'s "+p.mode+' Tracker'; $('activeProfileSubtitle').textContent=p.dob?'Age '+calcAge(p.dob):''; setupMode(p); render();}
+  function backToProfiles(){localStorage.removeItem(ACTIVE_KEY); $('trackerScreen').classList.add('hidden'); $('profileScreen').classList.remove('hidden'); renderProfiles();}
+
+  function severity(e,mode){var score=Number(e.pain||0)+Math.min(Number(e.stoolCount||0),10); if(mode==='IBD'){if((e.bloodMucus||'').includes('Blood'))score+=4;if((e.bloodMucus||'').includes('Mucus'))score+=2;} if(mode==='Allergy'){if(e.skinReaction&&e.skinReaction!=='None')score+=3;if(e.skinReaction==='Swelling'||e.skinReaction==='Hives')score+=3;if(e.breathing&&e.breathing!=='No')score+=5;if(e.vomiting==='Vomited once')score+=3;if(e.vomiting==='Repeated vomiting')score+=6;} if(mode==='Sick'){var t=Number(e.temperature||0); if(t>=38)score+=3;if(t>=39)score+=5;if(e.lethargic==='Yes')score+=3;if(e.lethargic==='Very lethargic')score+=5;} Object.values(e.customValues||{}).forEach(function(v){score+=Number(v||0);}); if(e.energy==='Very low')score+=2;if(e.energy==='Low')score+=1; return score>=12?'High':score>=7?'Medium':'Low';}
+
+  function currentLogTime(){
+    var d=new Date();
+    return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function mergeText(existing,incoming,separator){
+    existing=String(existing||'').trim();
+    incoming=String(incoming||'').trim();
+    if(!incoming) return existing;
+    if(!existing) return incoming;
+    if(existing.toLowerCase().indexOf(incoming.toLowerCase())>-1) return existing;
+    return existing+(separator||', ')+incoming;
+  }
+
+  function maxNumberText(a,b){
+    var na=Number(a||0), nb=Number(b||0);
+    return String(Math.max(na,nb));
+  }
+
+  function maxTempText(a,b){
+    var na=Number(a||0), nb=Number(b||0);
+    if(!na && !nb) return '';
+    return String(Math.max(na,nb));
+  }
+
+  function pickWorse(existing,incoming,order){
+    existing=existing||order[0]||'';
+    incoming=incoming||order[0]||'';
+    return order.indexOf(incoming)>order.indexOf(existing)?incoming:existing;
+  }
+
+  function buildMedLog(e){
+    if(!e.meds) return '';
+    var t=e.medicineTime||currentLogTime();
+    var dose=e.medicineDoseInput?(' ('+e.medicineDoseInput+')'):'';
+    return t+' '+e.meds+dose;
+  }
+
+  function mergeDailyEntry(existing,incoming,mode){
+    var merged=Object.assign({},existing||{});
+    merged.date=incoming.date;
+
+    merged.breakfast=mergeText(existing.breakfast,incoming.breakfast,', ');
+    merged.lunch=mergeText(existing.lunch,incoming.lunch,', ');
+    merged.dinner=mergeText(existing.dinner,incoming.dinner,', ');
+    merged.snacks=mergeText(existing.snacks,incoming.snacks,', ');
+
+    merged.temperature=maxTempText(existing.temperature,incoming.temperature);
+    merged.stoolCount=maxNumberText(existing.stoolCount,incoming.stoolCount);
+    merged.pain=maxNumberText(existing.pain,incoming.pain);
+
+    merged.bloodMucus=pickWorse(existing.bloodMucus,incoming.bloodMucus,['None','Mucus only','Blood only','Blood + mucus']);
+    merged.vomiting=pickWorse(existing.vomiting,incoming.vomiting,['None','Mild nausea','Vomited once','Repeated vomiting']);
+    merged.skinReaction=pickWorse(existing.skinReaction,incoming.skinReaction,['None','Mild rash','Itchy rash','Hives','Swelling']);
+    merged.breathing=pickWorse(existing.breathing,incoming.breathing,['No','Mild cough','Wheezing','Shortness of breath']);
+    merged.lethargic=pickWorse(existing.lethargic,incoming.lethargic,['No','Mild','Yes','Very lethargic']);
+    merged.energy=pickWorse(existing.energy,incoming.energy,['Good','Okay','Low','Very low']);
+
+    if(incoming.reactionDelay && incoming.reactionDelay!=='Immediately'){
+      merged.reactionDelay=incoming.reactionDelay;
+    }else{
+      merged.reactionDelay=existing.reactionDelay||incoming.reactionDelay;
+    }
+
+    var medLog=buildMedLog(incoming);
+    if(medLog){
+      merged.meds=mergeText(existing.meds,medLog,' | ');
+      merged.medicineTime=mergeText(existing.medicineTime,incoming.medicineTime||currentLogTime(),' | ');
+      merged.medicineDoseInput=mergeText(existing.medicineDoseInput,incoming.medicineDoseInput,' | ');
+    }else{
+      merged.meds=existing.meds||'';
+      merged.medicineTime=existing.medicineTime||'';
+      merged.medicineDoseInput=existing.medicineDoseInput||'';
+    }
+
+    var noteBits=[];
+    if(incoming.notes && String(incoming.notes).trim()) noteBits.push('['+currentLogTime()+'] '+incoming.notes.trim());
+    var mealBits=[];
+    ['breakfast','lunch','dinner','snacks'].forEach(function(k){ if(incoming[k]) mealBits.push(k+': '+incoming[k]); });
+    if(mealBits.length) noteBits.push('['+currentLogTime()+'] Food update — '+mealBits.join('; '));
+    if(medLog) noteBits.push('['+currentLogTime()+'] Medicine update — '+medLog);
+    if(incoming.events&&incoming.events.length){noteBits.push('['+currentLogTime()+'] Event update — '+incoming.events.map(function(ev){return ev.time+' '+ev.type+(ev.stoolType?' / '+ev.stoolType:'')+(ev.details?' — '+ev.details:'');}).join('; '));}
+    merged.notes=mergeText(existing.notes,noteBits.join('\n'),'\n');
+
+    merged.customValues=Object.assign({},existing.customValues||{},incoming.customValues||{});
+    merged.events=(existing.events||[]).concat(incoming.events||[]);
+    merged.severity=severity(merged,mode);
+    merged.updatedAt=new Date().toISOString();
+    return merged;
+  }
+
+  function saveEntry(ev){
+    ev.preventDefault();
+    var list=profiles(), p=list.find(function(x){return x.id===activeId();});
+    if(!p)return;
+
+    var cv={};
+    document.querySelectorAll('[data-symptom]').forEach(function(el){cv[el.dataset.symptom]=el.value;});
+
+    var e={date:$('date').value,temperature:$('temperature').value,stoolCount:$('stoolCount').value,bloodMucus:$('bloodMucus').value,pain:$('pain').value,reactionDelay:$('reactionDelay').value,vomiting:$('vomiting').value,skinReaction:$('skinReaction').value,breathing:$('breathing').value,meds:$('meds').value,medicineDoseInput:$('medicineDoseInput').value,medicineTime:$('medicineTime').value,lethargic:$('lethargic').value,energy:$('energy').value,breakfast:$('breakfast').value,lunch:$('lunch').value,dinner:$('dinner').value,snacks:$('snacks').value,notes:$('notes').value,customValues:cv,events:pendingEvents.slice()};
+    e.severity=severity(e,p.mode);
+
+    p.entries=p.entries||[];
+    var existing=p.entries.find(function(x){return x.date===e.date;});
+    var wasMerged=!!existing;
+
+    if(existing){
+      var merged=mergeDailyEntry(existing,e,p.mode);
+      p.entries=p.entries.map(function(x){return x.date===e.date?merged:x;});
+    }else{
+      e.createdAt=new Date().toISOString();
+      p.entries.push(e);
+    }
+
+    p.entries.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    saveProfiles(list);
+    ev.target.reset();
+    pendingEvents=[];
+    $('date').value=fmt(new Date());
+    setupMode(p);
+    render();
+
+    var sug=$('healthSuggestionBox');
+    if(sug){
+      sug.style.display='block';
+      sug.innerHTML=(wasMerged?'<strong>Auto-merged:</strong> Updated existing entry for '+esc(e.date)+'.':'<strong>Saved:</strong> Created new entry for '+esc(e.date)+'.')+'<div class="small">Same-date updates now merge meals, meds, symptoms, and notes instead of overwriting.</div>';
+    }
+  }
+
+  function render(){var p=activeProfile(); if(!p)return; var entries=p.entries||[]; renderSummaryAndCharts(entries,p); renderWarnings(entries,p); renderFood(entries,p); renderFoodSuggestions(entries,p); renderHistory(entries,p);}
+
+  /* ── PERIOD FILTER (dynamic, user-selectable) ── */
+  function periodInfo(){
+    var sel=$('summaryPeriod');
+    var v=sel?sel.value:'14';
+    var labels={ '1':'Today','2':'Last 2 days','7':'Last 7 days','14':'Last 14 days','30':'Last 1 month','90':'Last 3 months','180':'Last 6 months','365':'Last 1 year','all':'All data' };
+    return { value:v, label:labels[v]||'Summary' };
+  }
+  function filterByPeriod(entries){
+    if(!entries.length) return [];
+    var pi=periodInfo();
+    var sorted=entries.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    if(pi.value==='all') return sorted;
+    var days=Number(pi.value);
+    var anchor=new Date(sorted[0].date); anchor.setHours(23,59,59,999);
+    var start=new Date(anchor); start.setDate(start.getDate()-(days-1)); start.setHours(0,0,0,0);
+    return sorted.filter(function(e){var d=new Date(e.date);return d>=start && d<=anchor;});
+  }
+
+  /* ── SYMPTOM DETECTORS (per entry) ── */
+  function evHasBlood(e){ return /blood/i.test(e.bloodMucus||''); }
+  function evHasMucus(e){ return /mucus/i.test(e.bloodMucus||''); }
+  function evHasVomit(e){ return e.vomiting==='Vomited once'||e.vomiting==='Repeated vomiting'||/muntah|vomit/i.test(e.notes||''); }
+  function evHasItch(e){ return ['Mild rash','Itchy rash','Hives','Swelling'].indexOf(e.skinReaction)>-1; }
+  function evHasHives(e){ return e.skinReaction==='Hives'||e.skinReaction==='Swelling'; }
+  function evHasFever(e){ return Number(e.temperature||0)>=38; }
+  function evHasDiarrhea(e){ return Number(e.stoolCount||0)>=4||/watery|diarrhea|mencret|cair/i.test(JSON.stringify(e.events||[])+' '+(e.notes||'')); }
+  function evHasLethargic(e){ return e.lethargic==='Yes'||e.lethargic==='Very lethargic'; }
+  function evHasPain(e){ return Number(e.pain||0)>=3; }
+  function evIsTrigger(e){ return e.severity && e.severity!=='Low'; }
+  function evHealthyGut(e){ return Number(e.pain||0)===0 && !evHasBlood(e) && !evHasMucus(e) && Number(e.stoolCount||0)<=2; }
+  function evHasAnaphylaxis(e){
+    if(e.breathing==='Wheezing'||e.breathing==='Shortness of breath') return true;
+    var blob=JSON.stringify(e.events||[]).toLowerCase()+' '+String(e.notes||'').toLowerCase();
+    return /anaphyla|anafila|shock|throat|tenggorokan|sesak parah/.test(blob);
+  }
+  function anaScore(e){
+    if(/anaphyla|anafila|shock/.test((JSON.stringify(e.events||[])+' '+(e.notes||'')).toLowerCase())) return 3;
+    if(e.breathing==='Shortness of breath') return 3;
+    if(e.breathing==='Wheezing') return 2;
+    if(e.breathing==='Mild cough') return 1;
+    return 0;
+  }
+
+  /* ── CARD & CHART DEFINITIONS PER MODE ──
+     Each card: {key,label,type,calc(recent)->value, freq(recent)->count for ordering}
+     'freq' is used to order the dynamic symptom cards by how often they occur. */
+  function cardDefs(mode){
+    var fixed=[{ key:'daysLogged', label:'Days logged', fixed:true, calc:function(r){return r.length;}, freq:function(){return Infinity;} }];
+    if(mode==='IBD'){
+      return fixed.concat([
+        { key:'avgStool', label:'Avg BAB/day', calc:function(r){return r.length?(r.reduce(function(s,e){return s+Number(e.stoolCount||0);},0)/r.length).toFixed(1):0;}, freq:function(r){return r.reduce(function(s,e){return s+Number(e.stoolCount||0);},0);} },
+        { key:'bloodMucusDays', label:'Days with blood + mucus', calc:function(r){return r.filter(function(e){return evHasBlood(e)&&evHasMucus(e);}).length;}, freq:function(r){return r.filter(function(e){return evHasBlood(e)&&evHasMucus(e);}).length;} },
+        { key:'triggerDays', label:'Trigger days', calc:function(r){return r.filter(evIsTrigger).length;}, freq:function(r){return r.filter(evIsTrigger).length;} },
+        { key:'avgPain', label:'Avg pain', calc:function(r){return r.length?(r.reduce(function(s,e){return s+Number(e.pain||0);},0)/r.length).toFixed(1):0;}, freq:function(r){return r.filter(evHasPain).length;} },
+        { key:'healthyGut', label:'Healthy gut days', calc:function(r){return r.filter(evHealthyGut).length;}, freq:function(r){return r.filter(evHealthyGut).length;} }
+      ]);
+    }
+    if(mode==='Allergy'){
+      return fixed.concat([
+        { key:'reactionDays', label:'Reaction days', calc:function(r){return r.filter(evIsTrigger).length;}, freq:function(r){return r.filter(evIsTrigger).length;} },
+        { key:'vomitDays', label:'Vomiting days', calc:function(r){return r.filter(evHasVomit).length;}, freq:function(r){return r.filter(evHasVomit).length;} },
+        { key:'itchDays', label:'Itch / hives days', calc:function(r){return r.filter(evHasItch).length;}, freq:function(r){return r.filter(evHasItch).length;} },
+        { key:'diarrheaDays', label:'Diarrhea days', calc:function(r){return r.filter(evHasDiarrhea).length;}, freq:function(r){return r.filter(evHasDiarrhea).length;} }
+      ]);
+    }
+    if(mode==='Sick'){
+      return fixed.concat([
+        { key:'feverDays', label:'Fever days', calc:function(r){return r.filter(evHasFever).length;}, freq:function(r){return r.filter(evHasFever).length;} },
+        { key:'avgTemp', label:'Avg temp °C', calc:function(r){var t=r.filter(function(e){return Number(e.temperature||0)>0;});return t.length?(t.reduce(function(s,e){return s+Number(e.temperature);},0)/t.length).toFixed(1):'–';}, freq:function(r){return r.filter(evHasFever).length;} },
+        { key:'lethargicDays', label:'Lethargic days', calc:function(r){return r.filter(evHasLethargic).length;}, freq:function(r){return r.filter(evHasLethargic).length;} },
+        { key:'vomitDays', label:'Vomiting days', calc:function(r){return r.filter(evHasVomit).length;}, freq:function(r){return r.filter(evHasVomit).length;} }
+      ]);
+    }
+    // Custom / fallback
+    return fixed.concat([
+      { key:'triggerDays', label:'Trigger days', calc:function(r){return r.filter(evIsTrigger).length;}, freq:function(r){return r.filter(evIsTrigger).length;} },
+      { key:'avgPain', label:'Avg pain', calc:function(r){return r.length?(r.reduce(function(s,e){return s+Number(e.pain||0);},0)/r.length).toFixed(1):0;}, freq:function(r){return r.filter(evHasPain).length;} }
+    ]);
+  }
+
+  /* Chart defs: {key,title,data(sorted)->[nums], freq(recent)->count, max?} only shown if it has any data */
+  function chartDefs(mode){
+    if(mode==='IBD'){
+      return [
+        { key:'bm', title:'Bowel Movement / BAB Trend', data:function(s){return s.map(function(e){return Number(e.stoolCount||0);});}, freq:function(r){return r.reduce(function(a,e){return a+Number(e.stoolCount||0);},0);}, hasData:function(s){return s.some(function(e){return Number(e.stoolCount||0)>0;});} },
+        { key:'pain', title:'Pain Trend', data:function(s){return s.map(function(e){return Number(e.pain||0);});}, max:5, freq:function(r){return r.filter(evHasPain).length;}, hasData:function(s){return s.some(function(e){return Number(e.pain||0)>0;});} },
+        { key:'mucus', title:'Mucus in stool', data:function(s){return s.map(function(e){return evHasMucus(e)?1:0;});}, max:1, freq:function(r){return r.filter(evHasMucus).length;}, hasData:function(s){return s.some(evHasMucus);} },
+        { key:'bloodmucus', title:'Blood + mucus in stool', data:function(s){return s.map(function(e){return (evHasBlood(e)&&evHasMucus(e))?1:0;});}, max:1, freq:function(r){return r.filter(function(e){return evHasBlood(e)&&evHasMucus(e);}).length;}, hasData:function(s){return s.some(function(e){return evHasBlood(e)&&evHasMucus(e);});} }
+      ];
+    }
+    if(mode==='Allergy'){
+      return [
+        { key:'vomit', title:'Vomiting Trend', data:function(s){return s.map(function(e){return e.vomiting==='Repeated vomiting'?3:e.vomiting==='Vomited once'?2:e.vomiting==='Mild nausea'?1:0;});}, max:3, freq:function(r){return r.filter(evHasVomit).length;}, hasData:function(s){return s.some(evHasVomit);} },
+        { key:'itch', title:'Itch / Rash Trend', data:function(s){return s.map(function(e){return e.skinReaction==='Swelling'?5:e.skinReaction==='Hives'?4:e.skinReaction==='Itchy rash'?3:e.skinReaction==='Mild rash'?2:0;});}, max:5, freq:function(r){return r.filter(evHasItch).length;}, hasData:function(s){return s.some(evHasItch);} },
+        { key:'ana', title:'Anaphylactic / breathing severity', data:function(s){return s.map(anaScore);}, max:3, freq:function(r){return r.filter(evHasAnaphylaxis).length;}, hasData:function(s){return s.some(function(e){return anaScore(e)>0;});} },
+        { key:'temp', title:'Temperature Trend', data:function(s){return s.map(function(e){return e.temperature?Number(e.temperature):null;});}, freq:function(r){return r.filter(evHasFever).length;}, hasData:function(s){return s.some(function(e){return Number(e.temperature||0)>0;});} }
+      ];
+    }
+    if(mode==='Sick'){
+      return [
+        { key:'temp', title:'Temperature Trend', data:function(s){return s.map(function(e){return e.temperature?Number(e.temperature):null;});}, freq:function(r){return r.filter(evHasFever).length;}, hasData:function(s){return s.some(function(e){return Number(e.temperature||0)>0;});} },
+        { key:'pain', title:'Pain / Lethargic Trend', data:function(s){return s.map(function(e){var l=e.lethargic==='Very lethargic'?3:e.lethargic==='Yes'?2:e.lethargic==='Mild'?1:0;return Math.max(Number(e.pain||0),l);});}, max:5, freq:function(r){return r.filter(function(e){return evHasPain(e)||evHasLethargic(e);}).length;}, hasData:function(s){return s.some(function(e){return evHasPain(e)||evHasLethargic(e);});} },
+        { key:'vomit', title:'Vomiting Trend', data:function(s){return s.map(function(e){return e.vomiting==='Repeated vomiting'?3:e.vomiting==='Vomited once'?2:e.vomiting==='Mild nausea'?1:0;});}, max:3, freq:function(r){return r.filter(evHasVomit).length;}, hasData:function(s){return s.some(evHasVomit);} }
+      ];
+    }
+    return [
+      { key:'pain', title:'Pain Trend', data:function(s){return s.map(function(e){return Number(e.pain||0);});}, max:5, freq:function(r){return r.filter(evHasPain).length;}, hasData:function(s){return s.some(function(e){return Number(e.pain||0)>0;});} }
+    ];
+  }
+
+  function renderSummaryAndCharts(entries,p){
+    var pi=periodInfo();
+    $('summaryTitle').textContent=pi.label+' Summary';
+    var recent=filterByPeriod(entries);
+
+    /* Cards: keep "Days logged" first, order the rest dynamically by frequency desc */
+    var defs=cardDefs(p.mode);
+    var fixedCards=defs.filter(function(d){return d.fixed;});
+    var dyn=defs.filter(function(d){return !d.fixed;}).map(function(d){return {def:d,score:d.freq(recent)};});
+    dyn.sort(function(a,b){return b.score-a.score;});
+    var ordered=fixedCards.concat(dyn.map(function(x){return x.def;}));
+    $('summaryCards').innerHTML=ordered.map(function(d){
+      return '<div class="stat"><strong>'+d.calc(recent)+'</strong><span>'+esc(d.label)+'</span></div>';
+    }).join('');
+
+    /* Charts: dynamic per mode, only those with data, ordered by frequency desc */
+    var container=$('chartsContainer');
+    dynamicCharts.forEach(function(c){ try{c.destroy();}catch(e){} });
+    dynamicCharts=[];
+    container.innerHTML='';
+
+    var sorted=recent.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+    var labels=sorted.map(function(e){return e.date;});
+    function foodsForEntry(e){ return [e.breakfast,e.lunch,e.dinner,e.snacks].filter(Boolean).join(' | ')||'-'; }
+    var meta=sorted.map(function(e){return {food:foodsForEntry(e),meds:e.meds||'-',severity:e.severity||'-',vomiting:e.vomiting||'-',skin:e.skinReaction||'-'};});
+    function baseTooltip(){return {callbacks:{afterLabel:function(ctx){var m=meta[ctx.dataIndex]; if(!m)return ''; return ['Food: '+m.food,'Meds: '+m.meds,'Severity: '+m.severity];}}};}
+
+    if(!sorted.length){
+      container.innerHTML='<p class="small" style="margin-top:14px;">No logged data in this period. Try a wider period.</p>';
+      return;
+    }
+
+    var cdefs=chartDefs(p.mode)
+      .filter(function(d){return d.hasData(sorted);})
+      .map(function(d){return {def:d,score:d.freq(recent)};})
+      .sort(function(a,b){return b.score-a.score;})
+      .map(function(x){return x.def;});
+
+    if(!cdefs.length){
+      container.innerHTML='<p class="small" style="margin-top:14px;">No chartable symptom data yet for this profile.</p>';
+      return;
+    }
+
+    cdefs.forEach(function(d){
+      var wrap=document.createElement('div');
+      wrap.style.marginTop='22px';
+      var h=document.createElement('h3'); h.textContent=d.title; wrap.appendChild(h);
+      var cv=document.createElement('canvas'); cv.height=120; wrap.appendChild(cv);
+      container.appendChild(wrap);
+      var opts={responsive:true,plugins:baseTooltip(),scales:{y:{beginAtZero:true}}};
+      if(d.key==='temp'){ opts.scales.y={suggestedMin:35,suggestedMax:41}; }
+      else if(d.max){ opts.scales.y={beginAtZero:true,max:d.max,ticks:{stepSize:1}}; }
+      else { opts.scales.y={beginAtZero:true,ticks:{stepSize:1}}; }
+      var chart=new Chart(cv,{type:'line',data:{labels:labels,datasets:[{label:d.title,data:d.data(sorted),tension:.3,spanGaps:true}]},options:opts});
+      dynamicCharts.push(chart);
+    });
+  }
+
+  function renderWarnings(entries,p){
+    var box=$('warningBox'), sug=$('healthSuggestionBox');
+    if(!entries.length){box.style.display='none';sug.style.display='none';return;}
+
+    function entryFoods(e){
+      return [e.breakfast,e.lunch,e.dinner,e.snacks].join(' ').toLowerCase();
+    }
+    var analysisAnchorDate=entries.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);})[0].date;
+    function daysBetween(a,b){return Math.floor((new Date(a)-new Date(b))/(1000*60*60*24));}
+    function withinDays(e,days){var diff=daysBetween(analysisAnchorDate,e.date);return diff>=0 && diff<=days;}
+    function hasSkinReaction(e){return ['Mild rash','Itchy rash','Hives','Swelling'].indexOf(e.skinReaction)>-1;}
+    function hasVomiting(e){return ['Mild nausea','Vomited once','Repeated vomiting'].indexOf(e.vomiting)>-1;}
+    function hasSeriousAllergy(e){return e.vomiting==='Repeated vomiting'||e.skinReaction==='Swelling'||e.breathing==='Wheezing'||e.breathing==='Shortness of breath';}
+
+    var recent30=entries.filter(function(e){return withinDays(e,30);});
+    var recent14=entries.filter(function(e){return withinDays(e,14);});
+    var latest=entries[0];
+    var notes=[];
+    var health=[];
+
+    if(p.mode==='Allergy'){
+      var shrimpEntries=entries.filter(function(e){return /shrimp|udang/i.test(entryFoods(e));});
+      var shrimpRecent6m=shrimpEntries.filter(function(e){return withinDays(e,183);});
+      var shrimpBadRecent6m=shrimpRecent6m.filter(function(e){return hasVomiting(e)||hasSkinReaction(e)||hasSeriousAllergy(e)||e.severity==='High';});
+      var shrimpExposureNames=shrimpRecent6m.map(function(e){
+        var f=entryFoods(e);
+        if(/shrimp fried rice/i.test(f)) return 'shrimp fried rice';
+        if(/shrimp dumpling/i.test(f)) return 'shrimp dumpling';
+        if(/shrimp soup/i.test(f)) return 'shrimp soup';
+        if(/shrimp rice bowl/i.test(f)) return 'shrimp rice bowl';
+        if(/small shrimp portion/i.test(f)) return 'small shrimp portion';
+        return (e.lunch||e.dinner||e.breakfast||'shrimp exposure').toLowerCase();
+      }).filter(Boolean);
+      shrimpExposureNames=Array.from(new Set(shrimpExposureNames)).slice(0,5);
+      var shrimpGraduated=shrimpRecent6m.length>=3 && shrimpBadRecent6m.length===0;
+
+      var fishIssues=entries.filter(function(e){return /fish|ikan/i.test(entryFoods(e)) && hasSkinReaction(e);});
+      var peanutIssues=entries.filter(function(e){return /peanut|kacang/i.test(entryFoods(e)) && hasSkinReaction(e);});
+      var recentFishPeanutIssues=recent30.filter(function(e){return (/(fish|ikan|peanut|kacang)/i.test(entryFoods(e))) && hasSkinReaction(e);});
+
+      if(shrimpGraduated){
+        notes.push('🎉 Congrats! You have graduated from shrimp allergy.');
+        notes.push('No vomiting reactions were detected after shrimp consumption in the last 6 months of this tracking period'+(shrimpExposureNames.length?', including: '+shrimpExposureNames.join(', '):'')+'.');
+        notes.push('Recent shrimp exposures show no vomiting, no hives/swelling, and a low severity trend.');
+      }
+      if(fishIssues.length || peanutIssues.length){
+        var still=[];
+        if(fishIssues.length) still.push('fish');
+        if(peanutIssues.length) still.push('peanut');
+        notes.push('⚠️ '+still.join(' and ')+' still show recurring mild skin reactions, such as itchy rash or hives. Continue cautious monitoring.');
+      }
+
+      var activeAllergyDanger=recent30.some(function(e){return hasSeriousAllergy(e);});
+      var recentVomiting=recent30.filter(function(e){return e.vomiting==='Vomited once'||e.vomiting==='Repeated vomiting';});
+      if(activeAllergyDanger){
+        health.push('Recent severe allergy signs were logged in the last 30 days. For breathing issues, swelling, repeated vomiting, dehydration signs, or worsening symptoms, contact a doctor immediately.');
+      }else if(recentVomiting.length){
+        health.push('Vomiting was logged in the last 30 days. Try small frequent sips and monitor hydration.');
+      }
+      if(recentFishPeanutIssues.length && !activeAllergyDanger){
+        health.push('Current 30-day severity looks skin-reaction focused, not vomiting-focused. Track whether fish/peanut reactions stay mild or escalate.');
+      }
+
+      var allMsgs=notes.concat(health);
+      if(allMsgs.length){
+        box.style.display=health.some(function(x){return x.indexOf('severe')>-1 || x.indexOf('Vomiting was logged')>-1;})?'block':'none';
+        box.innerHTML=box.style.display==='block'?'<strong>Heads up:</strong> '+esc(health[0]||'Monitor symptoms carefully.'):'';
+        sug.style.display='block';
+        sug.innerHTML='<strong>Health notes:</strong><ul>'+allMsgs.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul><div class="small">Severity checks use the last 30 days. Longer history is used only for recovery/graduation patterns. Guidance only — not a medical diagnosis.</div>';
+      }else{
+        box.style.display='none'; sug.style.display='none';
+      }
+      return;
+    }
+
+    var recent=recent14.length?recent14:entries.slice(0,4);
+    var vom=latest.vomiting==='Repeated vomiting'?4:latest.vomiting==='Vomited once'?1:0, dia=Number(latest.stoolCount||0);
+    var danger=recent30.some(function(e){return e.severity==='High'||Number(e.temperature||0)>=39.5||Number(e.stoolCount||0)>=6||(e.bloodMucus||'').includes('Blood')||e.breathing==='Wheezing'||e.breathing==='Shortness of breath'||e.skinReaction==='Swelling'||e.vomiting==='Repeated vomiting';});
+    box.style.display=danger?'block':'none';
+    box.innerHTML='<strong>Heads up:</strong> Recent logs from the last 30 days show high severity symptoms. This is not medical advice. For breathing issues, swelling, blood, dehydration signs, or worsening symptoms, contact a doctor immediately.';
+
+    var s=[];
+    if(p.mode==='Sick'){
+      if(vom>=1)s.push('Child has vomited '+vom+' time(s). Try small frequent sips and monitor hydration.');
+      if(dia>=3)s.push('Child has had diarrhea '+dia+' time(s). Consider electrolyte support such as Oralit, Pedialyte, or Pocari in small frequent sips.');
+      if((vom>=3||dia>=6)&&latest.energy!=='Good')s.push('If your child is only eating or drinking a little, hydration becomes very important. Try electrolytes and monitor urine output.');
+      if((vom>=3||dia>=8)&&(latest.lethargic==='Yes'||latest.lethargic==='Very lethargic'))s.push('If your child refuses fluids, becomes very lethargic, or symptoms continue worsening, please bring them to the ER / IGD as soon as possible.');
+      if(Number(latest.temperature||0)>=39)s.push('High fever detected. Continue monitoring temperature trends and medication timing.');
+      if(recent30.filter(function(e){return Number(e.temperature||0)>=39;}).length>=3)s.push('High fever has persisted for multiple logs in the last 30 days. Consider scheduling a doctor visit to evaluate possible bacterial or viral infection.');
+    }
+    if(p.mode==='IBD'){
+      var streak=recent30.filter(function(e){return Number(e.stoolCount||0)>=6;}).length;
+      if(dia>=6)s.push('High bowel movement frequency detected. Consider hydration support and monitor flare progression.');
+      if(streak>=3)s.push('Bowel movement frequency has stayed high across recent logs in the last 30 days. Consider scheduling a GI appointment to evaluate whether your flare is worsening or treatment adjustment may be needed.');
+      if((latest.bloodMucus||'').includes('Blood'))s.push('Blood detected in recent logs. Monitor severity and contact your GI doctor if symptoms worsen or persist.');
+    }
+    sug.style.display=s.length?'block':'none';
+    sug.innerHTML=s.length?'<strong>Suggestions:</strong><ul>'+s.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul><div class="small">Severity checks use the last 30 days. Guidance only — not a medical diagnosis.</div>':'';
+  }
+
+  function detected(food){var lower=food.toLowerCase(), out=[]; Object.keys(foodAliases).forEach(function(k){if(lower.indexOf(k)>-1)out=out.concat(foodAliases[k]);}); return Array.from(new Set(out));}
+  function renderFood(entries,p){
+    var scores={};
+
+    entries.forEach(function(e){
+      var foods=[e.breakfast,e.lunch,e.dinner,e.snacks]
+        .join(',')
+        .toLowerCase()
+        .split(',')
+        .flatMap(function(part){
+          return part
+            .split(/\+|&| and | dan /gi)
+            .map(function(x){return x.trim();})
+            .filter(Boolean);
+        })
+        .filter(Boolean);
+
+      var score=
+        Number(e.stoolCount||0)+
+        Number(e.pain||0)+
+        (e.severity==='High'?3:e.severity==='Medium'?1:0)+
+        ((e.bloodMucus||'').includes('Blood')?5:0)+
+        (e.vomiting==='Repeated vomiting'?6:0)+
+        (Number(e.temperature||0)>=39?4:0);
+
+      foods.forEach(function(f){
+        if(!scores[f]) scores[f]={total:0,count:0};
+        scores[f].total+=score;
+        scores[f].count++;
+      });
+    });
+
+    var arr=Object.keys(scores)
+      .map(function(f){
+        var props=detected(f);
+        var avg=scores[f].total/scores[f].count;
+
+        var supportive=supportiveFoods.some(function(sf){
+          return f.includes(sf);
+        });
+
+        if(supportive){
+          avg=Math.max(0,avg-100);
+        }
+
+        if(p.mode==='IBD'){
+          if(props.includes('fried')||props.includes('very spicy')||props.includes('spicy')||props.includes('processed food')||props.includes('high fat')||props.includes('high oil')){
+            avg+=3;
+          }
+        }else if(p.mode==='Allergy'){
+          if(props.includes('seafood allergen')||props.includes('shellfish allergen')||props.includes('egg allergen')||props.includes('nut allergen')||props.includes('dairy')){
+            avg+=4;
+          }
+        }else if(p.mode==='Sick'){
+          if(props.includes('fried')||props.includes('high fat')||props.includes('very spicy')||props.includes('dry texture')){
+            avg+=3;
+          }
+        }else{
+          if(props.includes('fried')||props.includes('very spicy')||props.includes('processed food')||props.includes('high fat')){
+            avg+=3;
+          }
+        }
+
+        return {
+          food:f,
+          avg:avg,
+          props:props,
+          supportive:supportive
+        };
+      })
+      .sort(function(a,b){return a.avg-b.avg;});
+
+    var safe=arr.filter(function(x){
+      return x.avg<=6 && x.food.length>1;
+    }).slice(0,10);
+
+    var unsafe=arr.filter(function(x){
+      return x.avg>=10 &&
+             x.food.length>1 &&
+             !x.supportive;
+    }).slice(0,10);
+
+    if(p.mode==='Sick'){
+      unsafe=arr.filter(function(x){
+        return (x.props.includes('dry texture') ||
+               x.props.includes('high sodium') ||
+               x.props.includes('fried')) &&
+               !x.supportive;
+      }).slice(0,10);
+
+      safe=arr.filter(function(x){
+        return x.props.includes('hydrating') ||
+               x.props.includes('easy digestion') ||
+               x.props.includes('electrolyte') ||
+               x.supportive;
+      }).slice(0,10);
+    }
+
+    if(p.mode==='Allergy'){
+      var persistentAllergens=[];
+      entries.forEach(function(e){
+        var hasReaction=['Mild rash','Itchy rash','Hives','Swelling'].indexOf(e.skinReaction)>-1 || ['Vomited once','Repeated vomiting'].indexOf(e.vomiting)>-1;
+        if(!hasReaction) return;
+        [e.breakfast,e.lunch,e.dinner,e.snacks].join(',').toLowerCase().split(',').forEach(function(part){
+          part.split(/\+|&| and | dan /gi).map(function(x){return x.trim();}).filter(Boolean).forEach(function(f){
+            var pr=detected(f);
+            if(/fish|ikan|peanut|kacang|fishball|fish tofu|seafood|shrimp|udang/i.test(f) || pr.some(function(x){return x.indexOf('allergen')>-1 || x==='fish' || x==='processed seafood';})){
+              if(!supportiveFoods.some(function(sf){return f.includes(sf);})) persistentAllergens.push(f);
+            }
+          });
+        });
+      });
+      var counts={}; persistentAllergens.forEach(function(f){counts[f]=(counts[f]||0)+1;});
+      Object.keys(counts).forEach(function(f){
+        if(counts[f]>=1 && !unsafe.some(function(x){return x.food===f;})){
+          unsafe.push({food:f,avg:99,props:detected(f),supportive:false});
+        }
+      });
+      unsafe=unsafe.slice(0,10);
+    }
+
+    $('safeFoods').innerHTML=safe.length
+      ? safe.map(foodBtn).join('')
+      : '<div class="empty">Not enough data yet.</div>';
+
+    $('unsafeFoods').innerHTML=unsafe.length
+      ? unsafe.map(foodBtnDanger).join('')
+      : '<div class="empty">Not enough data yet.</div>';
+  }
+  function foodBtn(x){return '<button type="button" class="secondary" style="margin:4px" data-food="'+esc(x.food)+'">'+esc(x.food)+'</button>';}
+  function foodBtnDanger(x){return '<button type="button" class="danger" style="margin:4px" data-food="'+esc(x.food)+'">'+esc(x.food)+'</button>';}
+  var recentFoodSuggestionMemory=[];
+  var recentCookSuggestionMemory=[];
+
+  window.ibdMedicationToleranceExamples={
+    active:[
+      {food:'spicy ramen',level:'red',reason:'Historically associated with worsening flare symptoms and high diarrhea frequency during active unmedicated flare periods.'},
+      {food:'ayam geprek level 5',level:'red',reason:'Very spicy and oily foods previously correlated with worsening urgency and abdominal pain during active flare.'},
+      {food:'gorengan',level:'red',reason:'Heavy fried foods may worsen urgency and abdominal discomfort during active flare periods.'}
+    ],
+    recovery:[
+      {food:'mild curry rice',level:'yellow',reason:'Previously more tolerable during recovery/medicated periods compared to active flare phases. Continue portion control.'},
+      {food:'light opor ayam',level:'yellow',reason:'Small santan portions appeared milder while medicated/recovering, but still monitor symptoms carefully.'},
+      {food:'kopi susu',level:'yellow',reason:'Coffee historically triggered mild urgency but appeared less severe while medicated.'}
+    ],
+    stable:[
+      {food:'samyang',level:'yellow',reason:'Historically considered triggering during active flare periods. However, while medicated and stable/recovering, symptoms appeared significantly milder compared to previous flare episodes.'},
+      {food:'seblak level 2',level:'yellow',reason:'Previously tolerated better during medicated stable phases, but still contains spicy/oily ingredients that may trigger symptoms if your condition worsens again.'},
+      {food:'gacoan level 1',level:'yellow',reason:'Mildly triggering food. Historically more tolerable while medicated, but not recommended during active flare periods.'},
+      {food:'grilled salmon set',level:'green',reason:'Historically well tolerated during stable/recovery periods.'},
+      {food:'tim ayam jamur',level:'green',reason:'Soft texture and lighter seasoning historically associated with lower symptom burden.'}
+    ]
+  };
+
+  window.allergyGraduationDemo={
+    profileName:'Allergy Recovery Journey',
+    mode:'Allergy',
+    dob:'2024-02-12',
+    timeline:[
+      {
+        month:'Month 1',
+        food:'shrimp',
+        level:'red',
+        reaction:'Vomiting + itchy rash within 1 hour.'
+      },
+      {
+        month:'Month 4',
+        food:'small shrimp portion',
+        level:'yellow',
+        reaction:'Mild itchiness only. Monitor carefully.'
+      },
+      {
+        month:'Month 8',
+        food:'shrimp dumpling',
+        level:'yellow',
+        reaction:'No significant symptoms with small portions.'
+      },
+      {
+        month:'Month 12',
+        food:'shrimp fried rice',
+        level:'green',
+        reaction:'No significant symptoms observed over repeated exposures.'
+      }
+    ],
+    graduationMessage:'🎉 Congrats! You graduated shrimp after 1 year of successful gradual exposure tracking.'
+  };
+
+  window.additionalDemoProfiles=window.additionalDemoProfiles||[];
+
+  window.additionalDemoProfiles.push({
+    id:'allergy-recovery-demo',
+    name:'Allergy Recovery Journey',
+    mode:'Allergy',
+    dob:'2024-02-12',
+    notes:'Demonstrates gradual shrimp tolerance progression over 1 year while fish and peanut still remain suspicious.',
+    entries:[
+      {date:'2025-01-05',temperature:'37.1',stoolCount:'1',bloodMucus:'None',pain:'2',reactionDelay:'2-3 hours',vomiting:'Repeated vomiting',skinReaction:'Itchy rash',breathing:'No',meds:'Vometa Drops',medicineDoseInput:'0.3ml',medicineTime:'14:00',lethargic:'Yes',energy:'Low',breakfast:'banana oatmeal',lunch:'shrimp soup',dinner:'plain rice + chicken soup',snacks:'watermelon',notes:'Early shrimp exposure: vomiting + itchy rash after lunch.',customValues:{},severity:'High'},
+      {date:'2025-01-20',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'1',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Hives',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'16:00',lethargic:'Mild',energy:'Okay',breakfast:'toast',lunch:'rice + chicken soup',dinner:'fish soup',snacks:'banana',notes:'Fish still suspicious: hives after fish soup.',customValues:{},severity:'Medium'},
+      {date:'2025-02-06',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'2-3 hours',vomiting:'Vomited once',skinReaction:'Mild rash',breathing:'No',meds:'Vometa Drops',medicineDoseInput:'0.3ml',medicineTime:'15:00',lethargic:'Mild',energy:'Okay',breakfast:'porridge',lunch:'small shrimp portion',dinner:'rice + chicken',snacks:'water',notes:'Small shrimp still caused vomiting once, but less severe than January.',customValues:{},severity:'Medium'},
+      {date:'2025-02-22',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'1',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Itchy rash',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'18:00',lethargic:'No',energy:'Okay',breakfast:'banana pancakes',lunch:'rice + chicken',dinner:'peanut sauce siomay',snacks:'water',notes:'Peanut still suspicious: itchy rash after peanut sauce.',customValues:{},severity:'Medium'},
+      {date:'2025-03-07',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'Mild nausea',skinReaction:'Mild rash',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'13:00',lethargic:'No',energy:'Okay',breakfast:'oatmeal',lunch:'shrimp dumpling small bite',dinner:'chicken soup',snacks:'watermelon',notes:'Shrimp exposure becoming milder: nausea + mild rash only.',customValues:{},severity:'Medium'},
+      {date:'2025-03-21',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'toast',lunch:'rice + chicken soup',dinner:'porridge',snacks:'banana',notes:'Normal day, no allergen exposure.',customValues:{},severity:'Low'},
+      {date:'2025-04-05',temperature:'36.9',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'Mild nausea',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'banana oatmeal',lunch:'small shrimp portion',dinner:'rice noodle soup',snacks:'apple juice',notes:'Small shrimp portion: only mild nausea, no rash.',customValues:{},severity:'Medium'},
+      {date:'2025-04-19',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Hives',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'19:00',lethargic:'Mild',energy:'Okay',breakfast:'porridge',lunch:'chicken soup',dinner:'grilled fish',snacks:'water',notes:'Fish reaction persists: hives after grilled fish.',customValues:{},severity:'Medium'},
+      {date:'2025-05-06',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'Mild rash',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'13:30',lethargic:'No',energy:'Good',breakfast:'toast',lunch:'shrimp fried rice small portion',dinner:'chicken soup',snacks:'watermelon',notes:'Shrimp: mild rash only, no vomiting.',customValues:{},severity:'Medium'},
+      {date:'2025-05-23',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Itchy rash',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'16:00',lethargic:'No',energy:'Okay',breakfast:'oatmeal',lunch:'rice + chicken',dinner:'gado-gado peanut sauce',snacks:'banana',notes:'Peanut still triggering itchiness.',customValues:{},severity:'Medium'},
+      {date:'2025-06-04',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'Mild rash',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'banana pancakes',lunch:'shrimp dumpling',dinner:'porridge',snacks:'coconut water',notes:'Shrimp: mild rash only.',customValues:{},severity:'Medium'},
+      {date:'2025-06-18',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'porridge',lunch:'rice + chicken soup',dinner:'banana',snacks:'water',notes:'Normal day.',customValues:{},severity:'Low'},
+      {date:'2025-07-03',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'oatmeal',lunch:'shrimp rice bowl',dinner:'chicken soup',snacks:'watermelon',notes:'Shrimp: no visible reaction with small portion.',customValues:{},severity:'Low'},
+      {date:'2025-07-21',temperature:'36.9',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Hives',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'18:00',lethargic:'Mild',energy:'Okay',breakfast:'toast',lunch:'rice + chicken',dinner:'fishball noodle',snacks:'banana',notes:'Fish/processed seafood still suspicious: hives after fishball.',customValues:{},severity:'Medium'},
+      {date:'2025-08-06',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'banana oatmeal',lunch:'shrimp dumpling',dinner:'rice noodle soup',snacks:'apple juice',notes:'Shrimp exposure: no significant symptoms.',customValues:{},severity:'Low'},
+      {date:'2025-08-20',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Itchy rash',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'15:00',lethargic:'No',energy:'Okay',breakfast:'oatmeal',lunch:'peanut butter toast',dinner:'chicken soup',snacks:'water',notes:'Peanut remains suspicious: itchy rash.',customValues:{},severity:'Medium'},
+      {date:'2025-09-04',temperature:'36.6',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'banana pancakes',lunch:'shrimp fried rice small portion',dinner:'grilled salmon set',snacks:'watermelon',notes:'Shrimp: tolerated, no symptoms.',customValues:{},severity:'Low'},
+      {date:'2025-09-19',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'porridge',lunch:'rice + chicken soup',dinner:'banana',snacks:'coconut water',notes:'Normal safe-food day.',customValues:{},severity:'Low'},
+      {date:'2025-10-03',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'oatmeal',lunch:'shrimp soup',dinner:'rice + chicken',snacks:'banana',notes:'Shrimp: tolerated again with no symptoms.',customValues:{},severity:'Low'},
+      {date:'2025-10-22',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Hives',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'18:30',lethargic:'Mild',energy:'Okay',breakfast:'toast',lunch:'rice + chicken soup',dinner:'fried fish',snacks:'water',notes:'Fish still triggering hives.',customValues:{},severity:'Medium'},
+      {date:'2025-11-05',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'banana oatmeal',lunch:'shrimp fried rice',dinner:'chicken soup',snacks:'watermelon',notes:'Shrimp: tolerated, no symptoms.',customValues:{},severity:'Low'},
+      {date:'2025-11-23',temperature:'36.8',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'Itchy rash',breathing:'No',meds:'Cetirizine Drops',medicineDoseInput:'2.5ml',medicineTime:'17:00',lethargic:'No',energy:'Okay',breakfast:'porridge',lunch:'rice + chicken',dinner:'peanut sauce satay',snacks:'banana',notes:'Peanut still triggering itchy rash.',customValues:{},severity:'Medium'},
+      {date:'2025-12-05',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'1 hour',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'banana pancakes',lunch:'shrimp fried rice',dinner:'grilled salmon set',snacks:'watermelon',notes:'Shrimp graduated: repeated exposure now shows no symptoms.',customValues:{},severity:'Low'},
+      {date:'2025-12-20',temperature:'36.7',stoolCount:'1',bloodMucus:'None',pain:'0',reactionDelay:'Immediately',vomiting:'None',skinReaction:'None',breathing:'No',meds:'',medicineDoseInput:'',medicineTime:'',lethargic:'No',energy:'Good',breakfast:'oatmeal',lunch:'shrimp dumpling + rice',dinner:'chicken soup',snacks:'coconut water',notes:'🎉 Congrats! You graduated shrimp after 1 year. Fish and peanut still need caution.',customValues:{},severity:'Low'}
+    ],
+    achievement:'🎉 Congrats! You graduated shrimp after 1 year! Fish and peanut still need caution.'
+  });
+
+  function renderFoodSuggestions(entries,p){
+    var box=$('foodSuggestions');
+    if(!entries.length){
+      box.innerHTML='<div class="empty">Log more meals to get suggestions.</div>';
+      return;
+    }
+
+    var allFoods={};
+    var safeFoods=[];
+
+    entries.forEach(function(e){
+      var foods=[e.breakfast,e.lunch,e.dinner,e.snacks]
+        .join(',')
+        .toLowerCase()
+        .split(',')
+        .flatMap(function(part){
+          return part
+            .split(/\+|&| and | dan /gi)
+            .map(function(x){return x.trim();})
+            .filter(Boolean);
+        });
+
+      foods.forEach(function(f){
+        if(!f) return;
+
+        if(!allFoods[f]){
+          allFoods[f]={
+            count:0,
+            lastDate:e.date,
+            severityScore:0
+          };
+        }
+
+        allFoods[f].count++;
+
+        if(new Date(e.date) > new Date(allFoods[f].lastDate)){
+          allFoods[f].lastDate=e.date;
+        }
+
+        var score=0;
+        if(e.severity==='High') score+=3;
+        if(e.severity==='Medium') score+=1;
+        if(Number(e.stoolCount||0)>=6) score+=3;
+        if(Number(e.temperature||0)>=39) score+=3;
+        if(e.vomiting==='Repeated vomiting') score+=5;
+
+        allFoods[f].severityScore+=score;
+      });
+    });
+
+    Object.keys(allFoods).forEach(function(food){
+      var item=allFoods[food];
+      var avg=item.severityScore/item.count;
+
+      if(avg<=4 &&
+         !food.includes('hotpot mala') &&
+         !food.includes('dragon hot pot') &&
+         !food.includes('gorengan') &&
+         !food.includes('ayam geprek') &&
+         !food.includes('kopi susu') &&
+         !food.includes('fried') &&
+         !food.includes('seblak') &&
+         !food.includes('mie goreng')
+      ){
+        if(avg<=4){
+        safeFoods.push({
+          food:food,
+          lastDate:item.lastDate,
+          avg:avg
+        });
+      }
+      }
+    });
+
+    safeFoods.sort(function(a,b){
+      return new Date(a.lastDate)-new Date(b.lastDate);
+    });
+
+    var recommendationPool=[];
+
+    function addMany(arr){
+      arr.forEach(function(x){ recommendationPool.push(x); });
+    }
+
+    function expandFoodIdeas(baseList){
+      var phaseInfo=getHealthPhase(entries,p);
+      var proteins=['salmon','chicken','fish','tofu','egg','beef'];
+      var styles=[];
+
+      if(p.mode==='IBD'){
+        if(phaseInfo.phase==='active'){
+          styles=['congee','clear soup','rice bowl','steamed bowl','light broth','porridge','miso soup','ochazuke'];
+        }else if(phaseInfo.phase==='recovery'){
+          styles=['rice bowl','light curry','mild soup','udon','congee','grilled set','coconut milk light broth','stew'];
+        }else{
+          styles=['rice bowl','mild curry','opor style','kuah kuning','donburi','grilled set','stew','soup'];
+        }
+      }else if(p.mode==='Sick'){
+        styles=['clear soup','congee','porridge','light broth','soft rice bowl','egg drop soup'];
+      }else if(p.mode==='Allergy'){
+        styles=['plain rice bowl','simple soup','steamed bowl','oatmeal bowl','clear broth'];
+      }else{
+        styles=['rice bowl','soup','stew','grilled set','porridge'];
+      }
+
+      baseList.forEach(function(base){
+        styles.forEach(function(style){ recommendationPool.push(base+' '+style); });
+      });
+
+      proteins.forEach(function(protein){
+        styles.forEach(function(style){ recommendationPool.push(protein+' '+style); });
+      });
+    }
+
+    if(p.mode==='IBD'){
+      addMany([
+        'grilled salmon','rice porridge','banana smoothie','steamed fish','oatmeal','chicken soup','steamed eggs','fish soup','tofu soup','plain rice','coconut water',
+        'chicken congee','ochazuke','steamed cod rice bowl','soft tofu soup','mild japanese curry','grilled salmon set','light udon','pho without chili oil','semur light version','salmon in coconut milk','pepes ikan','nasi tim ayam','baked potato soup','miso salmon soup','chawanmushi','samgyetang','fish porridge','salmon rice casserole','grilled chicken rice bowl','tofu udon','light chicken stew','soft scrambled egg rice','mild rawon soup','light opor ayam','salmon kuah kuning','tim ayam jamur','sup ikan bening','beef potato soup','light ramen',
+        'salmon ochazuke','salmon donburi','salmon miso soup','salmon opor light','salmon kuah kuning','pepes salmon','salmon congee','salmon tofu soup','salmon potato bowl','baked salmon rice','chicken ochazuke','chicken chawanmushi','ayam tim','ayam kuah kuning light','ayam semur light','tofu chawanmushi','egg rice bowl','miso tofu soup','clear chicken broth rice','steamed chicken rice bowl'
+      ]);
+      expandFoodIdeas(['salmon','chicken','fish','tofu','egg','potato','rice']);
+    }
+
+    if(p.mode==='Sick'){
+      addMany(['chicken soup','watermelon','coconut water','porridge','banana','toast','electrolyte drink','steamed eggs','oatmeal','fish soup','banana oatmeal','electrolyte popsicle','soft tofu soup','egg drop soup','mashed potato soup','tim ayam','warm noodle soup','fish porridge','samgyetang','light congee','soft rice bowl','vegetable broth rice','banana pancakes','apple oatmeal','warm salmon soup','mild miso soup','warm wonton soup','rice casserole']);
+      expandFoodIdeas(['chicken','egg','tofu','fish','potato','rice']);
+    }
+
+    if(p.mode==='Allergy'){
+      addMany(['plain rice','banana','chicken soup','porridge','oatmeal','steamed chicken','fish soup','watermelon','toast','scrambled eggs','soft rice porridge','grilled salmon','vegetable soup','rice noodle soup','tofu bowl','plain udon','chicken rice bowl','banana oatmeal','clear broth soup','steamed potato bowl']);
+      expandFoodIdeas(['chicken','rice','potato','tofu','banana']);
+    }
+
+    recommendationPool=(Array.isArray(recommendationPool)?recommendationPool:[])
+      .filter(Boolean)
+      .map(function(x){ return String(x).trim(); });
+
+    recommendationPool=Array.from(new Set(recommendationPool));
+
+    var eatenFoods=Object.keys(allFoods);
+
+    var suggestions=[];
+
+    recommendationPool.forEach(function(food){
+      var found=eatenFoods.find(function(f){
+        return f.includes(food) || food.includes(f);
+      });
+
+      if(!found){
+        suggestions.push({
+          food:food,
+          reason:'New safe-style option not logged recently.'
+        });
+      }
+    });
+
+    safeFoods.slice(0,5).forEach(function(item){
+      var daysAgo=Math.floor((new Date()-new Date(item.lastDate))/(1000*60*60*24));
+
+      if(daysAgo>=10){
+        suggestions.push({
+          food:item.food,
+          reason:'Previously tolerated and not eaten for '+daysAgo+' days.'
+        });
+      }
+    });
+
+    suggestions=(Array.isArray(suggestions)?suggestions:[])
+      .filter(Boolean)
+      .filter(function(s){
+        return s && s.food && recentFoodSuggestionMemory.indexOf(s.food)===-1;
+      });
+
+    if(!suggestions.length){
+      recentFoodSuggestionMemory=[];
+      box.innerHTML='<div style="background:#f7f4ef;border-radius:14px;padding:14px;">😭 Sorry, I havent had the chance to experience other foods beyond the suggestions I already gave.</div>';
+      return;
+    }
+
+    suggestions=suggestions.slice(0,8);
+
+    suggestions.forEach(function(s){
+      recentFoodSuggestionMemory.push(s.food);
+    });
+
+    box.innerHTML=suggestions.length
+      ? suggestions.map(function(s){
+          var bg='#eef8ef';
+          if((s.reason||'').includes('🟡')) bg='#fff7df';
+          if((s.reason||'').includes('🔴')) bg='#fff0ef';
+          return '<div style="background:'+bg+';border-radius:14px;padding:12px;margin-bottom:10px;"><strong style="text-transform:capitalize">'+esc(s.food)+'</strong><br><span class="small">'+esc(s.reason)+'</span></div>';
+        }).join('')
+      : '<div class="empty">Not enough safe-food history yet.</div>';
+  }
+
+  function getHealthPhase(entries,p){
+    if(!p || !entries || !entries.length) return {phase:'unknown',label:'Unknown phase',note:'Not enough history yet.'};
+
+    var recent=entries.slice(0,5);
+    var latest=recent[0];
+
+    if(p.mode==='IBD'){
+      var active=recent.some(function(e){
+        return Number(e.stoolCount||0)>=6 || Number(e.pain||0)>=4 || (e.bloodMucus||'').includes('Blood');
+      });
+
+      var stableDays=recent.filter(function(e){
+        return Number(e.stoolCount||0)<=3 && Number(e.pain||0)<=1 && !(e.bloodMucus||'').includes('Blood') && e.severity==='Low';
+      }).length;
+
+      var improving=recent.length>=3 &&
+        Number(recent[0].stoolCount||0)<Number(recent[2].stoolCount||0) &&
+        Number(recent[0].pain||0)<=Number(recent[2].pain||0) &&
+        !(latest.bloodMucus||'').includes('Blood');
+
+      if(stableDays>=5){
+        return {phase:'stable',label:'Stable phase',note:'Recent logs look stable. Moderate flexibility is more reasonable, but keep known triggers portion-controlled.'};
+      }
+
+      if(improving || (!active && stableDays>=2)){
+        return {phase:'recovery',label:'Recovery phase',note:'Symptoms appear improved compared to earlier logs. Reintroduce richer/spicier foods slowly and in small portions.'};
+      }
+
+      return {phase:'active',label:'Active flare / caution phase',note:'Recent logs show flare markers. Be stricter with spicy, oily, high-fat, gassy, and heavy foods.'};
+    }
+
+    if(p.mode==='Sick'){
+      var feverDays=recent.filter(function(e){return Number(e.temperature||0)>=38;}).length;
+      if(feverDays>=3) return {phase:'active',label:'Active sick phase',note:'Fever has persisted. Focus on hydration, soft foods, and medication timing.'};
+      return {phase:'recovery',label:'Sick recovery phase',note:'Focus on hydration and easy digestion.'};
+    }
+
+    if(p.mode==='Allergy'){
+      return {phase:'allergy',label:'Allergy tracking phase',note:'Focus on known/suspected allergens and reaction timing.'};
+    }
+
+    return {phase:'custom',label:'Custom tracking phase',note:'Use your custom symptom history to guide choices.'};
+  }
+
+  function generateCookingSuggestions(){
+    var input=$('ingredientInput').value.toLowerCase().trim();
+    var box=$('cookSuggestions');
+    var p=activeProfile();
+    var phase=getHealthPhase(p ? (p.entries||[]) : [],p);
+    var recent=(p && p.entries)?(p.entries.slice(0,5)):[];
+
+    if(!input){
+      box.innerHTML='<div class="empty">Please input ingredients first.</div>';
+      return;
+    }
+
+    var ingredients=input
+      .split(',')
+      .map(function(x){return x.trim();})
+      .filter(Boolean);
+
+    var joined=ingredients.join(' ');
+
+    var cookingDb={
+      proteins:{
+        chicken:['ayam','chicken','dada ayam','paha ayam','ayam fillet'],
+        beef:['daging','sapi','daging sengkel','sengkel','daging rendang','beef','brisket','slice beef','shortplate'],
+        fish:['ikan','salmon','tuna','gurame','lele','dori','kakap','fish'],
+        egg:['telur','egg','eggs'],
+        tofu:['tahu','tofu'],
+        tempe:['tempe'],
+        shrimp:['udang','shrimp','prawn'],
+        duck:['bebek','duck']
+      },
+      carbs:{
+        rice:['nasi','rice','beras'],
+        potato:['kentang','potato'],
+        noodle:['mie','mie telur','noodle','pasta','spaghetti','bihun','kwetiau'],
+        oatmeal:['oat','oatmeal'],
+        bread:['roti','bread','toast']
+      },
+      vegetables:{
+        carrot:['wortel','carrot'],
+        cabbage:['kol','cabbage'],
+        napa:['sawi putih','napa cabbage'],
+        mustard:['sawi','mustard greens'],
+        spinach:['bayam','spinach'],
+        tomato:['tomat','tomato'],
+        mushroom:['jamur','mushroom'],
+        broccoli:['brokoli','broccoli'],
+        cauliflower:['kembang kol','cauliflower'],
+        beans:['buncis','beans','kacang panjang'],
+        onion:['bawang bombay','onion'],
+        garlic:['bawang putih','garlic'],
+        potato:['kentang','potato']
+      },
+      seasonings:{
+        rawon:['bumbu rawon','rawon paste','rawon'],
+        yellow:['bumbu kuning','kunyit','turmeric','yellow spice'],
+        curry:['curry block','curry blocks','bumbu kari','kari instan','instant curry'],
+        rendang:['bumbu rendang','rendang paste'],
+        kimchi:['kimchi'],
+        chili:['cabe','cabai','cabe ijo','cabe keriting','sambal','chili','chilli'],
+        coconut:['santan','coconut milk'],
+        soy:['kecap','sweet soy','soy sauce'],
+        gochujang:['gochujang'],
+        tomyum:['tom yum paste','bumbu tom yum'],
+        mala:['mala','mala paste','chili oil'],
+        miso:['miso'],
+        stock:['kaldu','broth','stock']
+      },
+      recovery:['air','water','kaldu','broth','sup','soup','pisang','banana','oralit','pocari','air kelapa','coconut water']
+    };
+
+    function hasAny(list){
+      return ingredients.some(function(ing){
+        return list.some(function(k){return ing.includes(k) || k.includes(ing);});
+      });
+    }
+
+    function findCategory(group){
+      return Object.keys(group).filter(function(key){return hasAny(group[key]);});
+    }
+
+    var proteins=findCategory(cookingDb.proteins);
+    var carbs=findCategory(cookingDb.carbs);
+    var veggies=findCategory(cookingDb.vegetables);
+    var seasonings=findCategory(cookingDb.seasonings);
+    var hasCookingContext=ingredients.length>=3 || seasonings.length>0 || veggies.length>0 || carbs.length>0;
+    var rawBeefCut=joined.includes('daging rendang') && hasCookingContext;
+    var riskNotes=[];
+    var allowedNotes=[];
+
+    var gassyVeggies=veggies.filter(function(v){return ['cabbage','broccoli','cauliflower','beans','onion','garlic'].indexOf(v)>-1;});
+    var currentlyMedicating=recent.some(function(e){
+      var meds=(e.meds||'').toLowerCase();
+      return meds.includes('salofalk') || meds.includes('pentasa') || meds.includes('asacol') || meds.includes('mezavant') || meds.includes('prednisone') || meds.includes('methylprednisolone') || meds.includes('budesonide') || meds.includes('entocort') || meds.includes('budenofalk');
+    });
+
+    if(p.mode==='IBD'){
+      if(phase.phase==='active'){
+        if(seasonings.includes('chili')) riskNotes.push('🔴 Chili/spicy foods are not recommended right now because your current logs still resemble active flare/caution phase. Historically, spicy foods were associated with worsening urgency or diarrhea during flare periods.');
+        if(seasonings.includes('coconut')) riskNotes.push('Limit santan during active flare because it is rich/high-fat and may feel heavy.');
+        if(seasonings.includes('curry')) riskNotes.push('Use very little curry block during active flare because it can be oily, salty, and spice-heavy.');
+        if(seasonings.includes('soy')) allowedNotes.push('Kecap is okay in small amount, but avoid making it too sweet/salty.');
+      }else if(phase.phase==='recovery'){
+        if(seasonings.includes('chili')){
+          if(currentlyMedicating){
+            allowedNotes.push('🟡 Small spicy portions were tolerated more mildly while medicating/recovering compared to previous unmedicated flare periods. Continue portion control and monitor symptoms carefully.');
+          }else{
+            allowedNotes.push('🟡 Small amounts of chili may be tested carefully during recovery, but avoid if urgency returns.');
+          }
+        }
+        if(seasonings.includes('coconut')) allowedNotes.push('Small santan amount may be okay in recovery, but keep it light.');
+      }else if(phase.phase==='stable'){
+        if(seasonings.includes('chili') || seasonings.includes('coconut')){
+          if(currentlyMedicating){
+            allowedNotes.push('🟢 Your recent logs look stable while medicated. Mild spicy foods or moderate santan may be tolerated better than during active flare periods, but still avoid overdoing them.');
+          }else{
+            allowedNotes.push('🟢 You appear stable recently, so moderate portions may be okay if historically tolerated.');
+          }
+        }
+      }
+
+      if(gassyVeggies.length){
+        riskNotes.push('Gassy/bloating-prone vegetables detected: '+gassyVeggies.join(', ')+'. For IBD, use small portions and cook until soft, especially during flare/recovery.');
+      }
+
+      if(carbs.includes('noodle')) riskNotes.push('Mie/noodles are not automatically unsafe, but limit portion if gluten/refined carbs worsen your symptoms.');
+      if(proteins.includes('shrimp')) allowedNotes.push('Seafood is not automatically an IBD trigger; preparation method matters more unless your own history shows otherwise.');
+    }
+
+    if(p.mode==='Allergy'){
+      if(proteins.includes('shrimp')) riskNotes.push('Shrimp/seafood detected. Avoid if this person has seafood-related reactions.');
+      if(proteins.includes('egg')) riskNotes.push('Egg detected. Watch carefully if egg has caused allergy symptoms before.');
+      if(seasonings.includes('kimchi')) riskNotes.push('Kimchi may contain hidden seafood/fish sauce depending on brand/recipe.');
+    }
+
+    if(p.mode==='Sick'){
+      if(seasonings.includes('chili') || seasonings.includes('kimchi') || seasonings.includes('mala')) riskNotes.push('Skip spicy/fermented toppings while sick because they may worsen nausea or stomach discomfort.');
+      if(seasonings.includes('coconut') || seasonings.includes('curry')) riskNotes.push('Use a lighter broth instead of rich curry/santan if appetite is low.');
+      if(gassyVeggies.length) riskNotes.push('Gassy vegetables can be harder to tolerate while sick. Cook until soft or use small portions.');
+    }
+
+    var recipes=[];
+
+    function addRecipe(title, use, avoid, steps, why, risk){
+      recipes.push({title:title,use:use,avoid:avoid,steps:steps,why:why,risk:risk});
+    }
+
+    function addMealSet(title, main, sides, veg, notes, risk){
+      recipes.push({mealSet:true,title:title,main:main,sides:sides,veg:veg,notes:notes,risk:risk});
+    }
+
+    if(proteins.includes('chicken') && (seasonings.includes('yellow') || seasonings.includes('soy'))){
+      var avoid=[];
+      if(p.mode==='IBD' && phase.phase==='active') avoid=['too much oil','too much kecap','raw/large portion cabbage','extra chili'];
+      else avoid=['excess oil','too much chili'];
+
+      addMealSet(
+        'Home Meal Set: Light Ayam Kecap/Bumbu Kuning',
+        {
+          title:'Main: Light Ayam Kecap Kuning',
+          desc:'Use ayam as the main protein. Simmer or pan-cook with little oil, small bumbu kuning, and small kecap.'
+        },
+        [
+          proteins.includes('tempe')?{title:'Side: Tempe Pan-Seared',desc:'Use minimal oil; avoid deep frying during flare.'}:null,
+          proteins.includes('tofu')?{title:'Side: Soft Tahu Pepes / Tahu Kuah',desc:'Steam or simmer tofu so it stays gentle and not oily.'}:null
+        ].filter(Boolean),
+        veggies.includes('cabbage')?{title:'Vegetable: Soft Cooked Cabbage',desc:'Kol can be gassy/bloating-prone. Use small portion and cook until soft.'}:null,
+        ['Protein stays as the main dish; tofu/tempe become sides instead of replacing the main protein.'].concat(riskNotes).concat(allowedNotes),
+        p.mode==='IBD'&&phase.phase==='active'?'Moderate, adjust oil/spice/fiber':'Lower to moderate'
+      );
+    }
+
+    if(proteins.includes('beef') && carbs.includes('noodle') && seasonings.includes('rawon')){
+      addRecipe(
+        p.mode==='Sick'?'Light Rawon Beef Noodle Soup':'Mild Rawon Beef Noodle Soup',
+        [rawBeefCut?'daging rendang cut / raw beef':'beef','mie telur/noodle','wortel','kol/sawi putih','small amount of bumbu rawon'],
+        p.mode==='IBD'?['kimchi during flare','too much oil','extra sambal','large portion cabbage']:p.mode==='Sick'?['kimchi','extra chili','oily broth']:['known allergens or hidden seafood seasoning'],
+        ['Simmer beef until tender.','Make a lighter rawon-style broth with less oil/seasoning.','Add wortel, kol, and sawi putih until soft.','Add mie telur last so it does not get mushy.','Use kimchi only as optional topping if tolerated.'],
+        p.mode==='IBD'?'Turns the ingredients into a soup-style meal while reducing spice/oil load and keeping noodles/cabbage portion-controlled.':p.mode==='Sick'?'Warm soup format is easier to tolerate than oily/spicy stir-fry.':'Uses the ingredients as a noodle soup while checking allergen exposure.',
+        p.mode==='IBD'?'Moderate during flare, better if mild broth':p.mode==='Sick'?'Moderate but adjustable':'Depends on allergy history'
+      );
+    }
+
+    if(proteins.includes('beef') && carbs.includes('potato') && (seasonings.includes('curry') || seasonings.includes('coconut'))){
+      addRecipe('Mild Beef Potato Curry Bowl',[rawBeefCut?'daging rendang cut / raw beef':'beef','kentang','small amount of curry block','water or light broth'],p.mode==='IBD'?['too much cabe ijo','too much santan','extra oil']:['known allergens'],['Simmer beef until tender.','Add potato and water/broth.','Use only a small amount of curry block.','Add santan only if tolerated, or skip it during flare.'],'Keeps the curry idea but reduces spice, oil, and rich coconut load.','Moderate during flare, better during stable days');
+    }
+
+    if(proteins.includes('chicken') && carbs.includes('rice')){
+      addRecipe('Chicken Soup Rice',['chicken','rice','broth/water'],['excess oil','too much sambal'],['Boil chicken in broth.','Serve with rice.','Keep seasoning light.'],'Simple balanced meal that usually works better than fried food.','Lower risk');
+    }
+
+    if(proteins.includes('fish') && carbs.includes('rice')){
+      addRecipe('Steamed/Grilled Fish Rice',['fish','rice'],['deep frying','heavy sambal'],['Steam or grill fish.','Serve with rice.','Add light soup if available.'],'Good protein option; for IBD, preparation matters more than fish itself.','Lower to moderate');
+    }
+
+    if(proteins.includes('egg') && carbs.includes('rice')){
+      addRecipe('Soft Egg Rice Bowl',['egg','rice'],['too much chili oil'],['Scramble or steam egg softly.','Serve with warm rice.','Add broth if available.'],'Simple and gentle meal option, unless egg is an allergy trigger.',p.mode==='Allergy'?'Check egg tolerance':'Lower risk');
+    }
+
+    if(!recipes.length){
+      addRecipe('Mode-Aware Simple Meal',ingredients.slice(0,5),riskNotes.length?['trigger-heavy ingredients listed above']:['excess oil/spice'],['Choose the safest protein/carb.','Cook by boiling, steaming, grilling, or soup style.','Reduce ingredients flagged as risky.'],'Fallback recipe because no exact template matched yet.','Depends on preparation');
+    }
+
+    box.innerHTML='';
+
+    box.innerHTML+='<div style="background:#f7f4ef;border-radius:14px;padding:12px;margin-bottom:14px;"><strong>'+esc(phase.label)+'</strong><br><span class="small">'+esc(phase.note)+'</span></div>';
+
+    if(riskNotes.length){
+      box.innerHTML+='<div style="background:#fff0ef;border:1px solid #d9847d;border-radius:14px;padding:14px;margin-bottom:14px;"><strong>Limit / adjust these:</strong><ul>'+riskNotes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul></div>';
+    }
+
+    if(allowedNotes.length){
+      box.innerHTML+='<div style="background:#f7f4ef;border-radius:14px;padding:14px;margin-bottom:14px;"><strong>Allowed with context:</strong><ul>'+allowedNotes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul></div>';
+    }
+
+    box.innerHTML+=recipes.slice(0,4).map(function(r){
+      if(r.mealSet){
+        return '<div style="background:#f7f4ef;border-radius:14px;padding:14px;margin-bottom:12px;"><strong style="font-size:18px;">'+esc(r.title)+'</strong><br><span class="pill">'+esc(r.risk)+'</span><p><strong>'+esc(r.main.title)+'</strong><br><span class="small">'+esc(r.main.desc)+'</span></p>'+(r.sides.length?'<p><strong>Sides:</strong></p><ul>'+r.sides.map(function(s){return '<li><strong>'+esc(s.title)+':</strong> '+esc(s.desc)+'</li>';}).join('')+'</ul>':'')+(r.veg?'<p><strong>'+esc(r.veg.title)+':</strong><br><span class="small">'+esc(r.veg.desc)+'</span></p>':'')+'<p><strong>Why:</strong></p><ul>'+r.notes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul></div>';
+      }
+
+      return '<div style="background:#f7f4ef;border-radius:14px;padding:14px;margin-bottom:12px;"><strong style="font-size:18px;">'+esc(r.title)+'</strong><br><span class="pill">'+esc(r.risk)+'</span><p><strong>Use:</strong> '+r.use.map(esc).join(', ')+'</p>'+(r.avoid.length?'<p><strong>Reduce/skip:</strong> '+r.avoid.map(esc).join(', ')+'</p>':'')+'<p><strong>Steps:</strong></p><ol>'+r.steps.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ol><p class="small"><strong>Why:</strong> '+esc(r.why)+'</p></div>';
+    }).join('');
+  }
+
+  function analyzeRestaurantFood(){
+    var input=$('restaurantFoodInput').value.toLowerCase().trim();
+    var box=$('restaurantFoodResult');
+    var p=activeProfile();
+
+    if(!input){
+      box.innerHTML='<div class="empty">Please input a food/drink first.</div>';
+      return;
+    }
+
+    var props=detected(input);
+
+    var riskLevel='Lower risk';
+    var reasons=[];
+
+    if(p.mode==='IBD'){
+      if(props.includes('very spicy') || props.includes('spicy') || props.includes('high oil') || props.includes('high fat') || props.includes('fried')){
+        riskLevel='Moderate risk';
+        reasons.push('For IBD mode, oily/fried/spicy foods may worsen urgency, diarrhea, or discomfort during flare periods.');
+      }
+
+      if(props.includes('processed food') || props.includes('high sodium')){
+        if(riskLevel==='Lower risk') riskLevel='Moderate risk';
+        reasons.push('Processed/high-sodium foods may be less ideal during flare or recovery.');
+      }
+
+      if(props.includes('gluten')){
+        reasons.push('Contains gluten/refined carbs. Not automatically unsafe, but better to limit portion if gluten tends to trigger your symptoms.');
+      }
+
+      if(props.includes('caffeine')){
+        reasons.push('Caffeine may worsen urgency/discomfort for some people.');
+      }
+
+      if(props.includes('seafood allergen') || props.includes('shellfish allergen') || props.includes('fish')){
+        reasons.push('Seafood/fish is not automatically a trigger for IBD; preparation method matters more here. Grilled/steamed is usually more recovery-friendly than fried/oily.');
+      }
+    }else if(p.mode==='Allergy'){
+      if(props.includes('seafood allergen') || props.includes('shellfish allergen') || props.includes('egg allergen') || props.includes('nut allergen')){
+        riskLevel='High risk';
+        reasons.push('Contains common allergen properties. Check past reaction pattern and avoid if previously reactive.');
+      }
+
+      if(props.includes('dairy')){
+        if(riskLevel==='Lower risk') riskLevel='Moderate risk';
+        reasons.push('Contains dairy-related ingredients.');
+      }
+    }else if(p.mode==='Sick'){
+      if(props.includes('fried') || props.includes('high fat') || props.includes('very spicy')){
+        riskLevel='Moderate risk';
+        reasons.push('During fever/sickness, oily/spicy foods may feel heavier and harder to tolerate.');
+      }
+
+      if(props.includes('dry texture')){
+        if(riskLevel==='Lower risk') riskLevel='Moderate risk';
+        reasons.push('Dry foods may feel less comfortable if hydration or appetite is low.');
+      }
+
+      if(props.includes('hydrating') || props.includes('easy digestion') || props.includes('electrolyte')){
+        reasons.push('Contains recovery-friendly properties for sick/fever mode.');
+      }
+    }else{
+      if(props.includes('very spicy') || props.includes('high fat') || props.includes('fried')){
+        riskLevel='Moderate risk';
+        reasons.push('Contains heavier/oily/spicy properties.');
+      }
+    }
+
+    if(props.includes('hydrating') || props.includes('easy digestion')){
+      reasons.push('Contains more recovery-friendly properties.');
+    }
+
+    var saferAlternatives=[];
+
+    if(riskLevel!=='Lower risk'){
+      if(p.mode==='IBD'){
+        saferAlternatives=['fish soup','porridge','grilled fish + rice','banana smoothie'];
+      }
+
+      if(p.mode==='Sick'){
+        saferAlternatives=['chicken soup','porridge','electrolyte drink','steamed eggs'];
+      }
+
+      if(p.mode==='Allergy'){
+        saferAlternatives=['plain rice','banana','chicken soup','oatmeal'];
+      }
+    }
+
+    box.innerHTML='<div style="background:#f7f4ef;border-radius:14px;padding:14px;"><strong style="font-size:18px;">'+esc(input)+'</strong><br><div style="margin-top:8px;"><span class="pill">'+esc(riskLevel)+'</span></div>'+(props.length?'<p><strong>Detected properties:</strong> '+props.map(function(p){return '<span class="pill">'+esc(p)+'</span>';}).join(' ')+'</p>':'')+(reasons.length?'<ul>'+reasons.map(function(r){return '<li>'+esc(r)+'</li>';}).join('')+'</ul>':'')+(saferAlternatives.length?'<p><strong>Safer alternatives:</strong><br>'+saferAlternatives.map(function(a){return '<span class="pill">'+esc(a)+'</span>';}).join(' ')+'</p>':'')+'<div class="small">Pattern helper only — not medical advice.</div></div>';
+  }
+
+  function showFood(food){var props=detected(food), p=activeProfile(), note=''; if(p&&p.mode==='Sick'){if(props.indexOf('dry texture')>-1)note='Dry foods may feel less comfortable during fever or dehydration. Hydrating foods like soup, porridge, fruit, or broth may be easier.'; if(props.indexOf('hydrating')>-1||props.indexOf('electrolyte')>-1)note='This may be more comfortable during fever because it supports hydration.';} $('foodInsightBox').style.display='block'; $('foodInsightBox').innerHTML='<h3 style="margin-top:0;text-transform:capitalize">'+esc(food)+'</h3>'+(props.length?'<p><strong>Detected properties:</strong> '+props.map(function(i){return '<span class="pill">'+esc(i)+'</span>';}).join(' ')+'</p>':'<p>No exact food database match yet.</p>')+(note?'<div style="margin-top:12px;background:#fff;padding:12px;border-radius:12px"><strong>Mode-specific note:</strong><br>'+esc(note)+'</div>':'')+'<p class="small">Pattern helper only, not medical advice.</p>';}
+
+  function renderHistory(entries,p){if(!entries.length){$('history').innerHTML='<div class="empty">No entries yet.</div>';return;} $('history').innerHTML='<table><thead><tr><th>Date</th><th>Temp</th><th>BAB</th><th>Symptoms</th><th>Severity</th><th>Meals</th><th>Meds</th><th>Notes</th><th></th></tr></thead><tbody>'+entries.map(function(e){var sym='Pain: '+esc(e.pain)+'<br>'; if(p.mode!=='Allergy')sym+='Blood/Mucus: '+esc(e.bloodMucus)+'<br>'; if(p.mode==='Allergy')sym+='Delay: '+esc(e.reactionDelay)+'<br>Vomiting: '+esc(e.vomiting)+'<br>Skin: '+esc(e.skinReaction)+'<br>Breathing: '+esc(e.breathing)+'<br>'; if(p.mode==='Sick')sym+='Lethargic: '+esc(e.lethargic)+'<br>Medicine time: '+esc(e.medicineTime)+'<br>'; if(e.events&&e.events.length){sym+='<strong>Events:</strong><br>'+e.events.map(function(ev){return esc(ev.time+' • '+ev.type+(ev.stoolType?' / '+ev.stoolType:'')+(ev.details?' — '+ev.details:''));}).join('<br>')+'<br>';} return '<tr><td data-label="Date">'+esc(e.date)+'</td><td data-label="Temp">'+esc(e.temperature||'-')+'</td><td data-label="BAB">'+esc(e.stoolCount)+'</td><td data-label="Symptoms">'+sym+'</td><td data-label="Severity"><span class="pill">'+esc(e.severity)+'</span></td><td data-label="Meals"><strong>Breakfast:</strong> '+esc(e.breakfast||'-')+'<br><strong>Lunch:</strong> '+esc(e.lunch||'-')+'<br><strong>Dinner:</strong> '+esc(e.dinner||'-')+'<br><strong>Snacks:</strong> '+esc(e.snacks||'-')+'</td><td data-label="Meds">'+esc(e.meds||'-')+' '+esc(e.medicineDoseInput||'')+'</td><td data-label="Notes">'+esc(e.notes||'-')+'</td><td><button type="button" class="danger" data-del-entry="'+esc(e.date)+'">Delete</button></td></tr>';}).join('')+'</tbody></table>';}
+
+  function deleteEntry(date){var list=profiles(), p=list.find(function(x){return x.id===activeId();}); if(!p)return; p.entries=(p.entries||[]).filter(function(e){return e.date!==date;}); saveProfiles(list); render();}
+  function clearProfile(){if(!confirm('Delete all entries for this profile?'))return; var list=profiles(), p=list.find(function(x){return x.id===activeId();}); if(!p)return; p.entries=[]; saveProfiles(list); render();}
+  function deleteProfile(id){if(!confirm('Delete this profile and all its data?'))return; saveProfiles(profiles().filter(function(p){return p.id!==id;})); renderProfiles();}
+  function exportCSV(){var p=activeProfile(); if(!p||!p.entries.length){alert('No data to export yet.');return;} var headers=['Profile','Mode','Date','Temp','BAB','Pain','Severity','Meds','Dose','Breakfast','Lunch','Dinner','Snacks','Notes']; var rows=p.entries.map(function(e){return [p.name,p.mode,e.date,e.temperature,e.stoolCount,e.pain,e.severity,e.meds,e.medicineDoseInput,e.breakfast,e.lunch,e.dinner,e.snacks,e.notes];}); var csv=[headers].concat(rows).map(function(r){return r.map(function(v){return '"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');}).join('\n'); var blob=new Blob([csv],{type:'text/csv'}), url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download=p.name+'-'+p.mode+'-tracker.csv'; a.click(); URL.revokeObjectURL(url);}
+  function doseSuggest(){
+    var med=$('meds').value;
+    var w=Number($('weightInput').value||0);
+    var box=$('doseSuggestionText');
+    var dose=$('medicineDoseInput');
+    var p=activeProfile();
+
+    var medDb={
+      'Tempra Drops':{type:'pediatric',mgPerMl:100,mgKgLow:10,mgKgHigh:15,note:'Paracetamol drops. Check bottle strength before using.'},
+      'Tempra Syrup':{type:'pediatric',mgPerMl:32,mgKgLow:10,mgKgHigh:15,note:'Paracetamol syrup. Many syrups are around 160mg/5ml = 32mg/ml, but confirm bottle strength.'},
+      'Praxion Drops':{type:'pediatric',mgPerMl:100,mgKgLow:10,mgKgHigh:15,note:'Paracetamol drops. Check bottle strength before using.'},
+      'Paracetamol':{type:'adult',suggestion:'Adult common OTC: 500mg per dose every 4–6 hours when needed. Follow product label maximum daily dose.'},
+      'Panadol':{type:'adult',suggestion:'Adult common OTC: 500mg per dose every 4–6 hours when needed. Follow product label maximum daily dose.'},
+      'Ibuprofen':{type:'adult',suggestion:'Adult common OTC: 200–400mg every 6–8 hours when needed. Avoid if contraindicated.'},
+      'Vometa Drops':{type:'caution',suggestion:'Pediatric anti-nausea dosing depends on age, weight, and doctor guidance. Track exact ml given from your doctor/pharmacist instruction.'},
+      'Cetirizine Drops':{type:'caution',suggestion:'Antihistamine dosing depends on age and product strength. Follow pediatric label or doctor guidance.'},
+      'Ondansetron':{type:'caution',suggestion:'Prescription/doctor-guided anti-nausea medicine. Track exact dose and timing from doctor instruction.'},
+      'Antihistamine':{type:'caution',suggestion:'Dose depends on the active ingredient. Track product name, mg/ml, and doctor/pharmacist guidance.'},
+      'Salofalk':{type:'ibd',suggestion:'Mesalazine for IBD — follow GI doctor prescription. Do not self-adjust flare/maintenance dose.'},
+      'Pentasa':{type:'ibd',suggestion:'Mesalazine for IBD — follow GI doctor prescription. Do not self-adjust flare/maintenance dose.'},
+      'Asacol':{type:'ibd',suggestion:'Mesalazine for IBD — follow GI doctor prescription.'},
+      'Mezavant':{type:'ibd',suggestion:'Mesalazine for IBD — follow GI doctor prescription.'},
+      'Canasa':{type:'ibd',suggestion:'Mesalazine suppository — follow GI doctor prescription.'},
+      'Entocort':{type:'ibd',suggestion:'Steroid/budesonide therapy — follow GI doctor instructions.'},
+      'Budenofalk':{type:'ibd',suggestion:'Steroid/budesonide therapy — follow GI doctor instructions.'},
+      'Prednisone':{type:'ibd',suggestion:'Steroid therapy — do not start, stop, or taper without doctor guidance.'},
+      'Methylprednisolone':{type:'ibd',suggestion:'Steroid therapy — follow doctor prescription and tapering plan.'},
+      'Imodium':{type:'adult',suggestion:'Loperamide brand. Use carefully and avoid if fever/bloody diarrhea unless doctor says so.'},
+      'Loperamide':{type:'adult',suggestion:'Adult common OTC: often 2mg after loose stool, but avoid if fever/bloody diarrhea unless doctor says so.'},
+      'Attapulgite':{type:'adult',suggestion:'Anti-diarrheal adsorbent. Follow product label; maintain hydration.'},
+      'Oralit':{type:'support',suggestion:'ORS/electrolyte support. Give small frequent sips after vomiting/diarrhea.'},
+      'Pedialyte':{type:'support',suggestion:'Electrolyte support. Give small frequent sips after vomiting/diarrhea.'},
+      'Lacto-B':{type:'support',suggestion:'Probiotic support commonly used during diarrhea recovery. Follow sachet label/doctor guidance.'},
+      'Interlac':{type:'support',suggestion:'Probiotic support commonly used during diarrhea recovery. Follow product label/doctor guidance.'},
+      'Zinc':{type:'support',suggestion:'Often used during pediatric diarrhea recovery; dose depends on age and doctor guidance.'},
+      'Probiotic':{type:'support',suggestion:'Probiotic support; dose depends on brand and formulation.'}
+    };
+
+    var data=medDb[med];
+    var txt='';
+
+    if(!data){
+      box.textContent='';
+      return;
+    }
+
+    if(data.type==='pediatric'){
+      if(w>0){
+        var lowMg=w*data.mgKgLow;
+        var highMg=w*data.mgKgHigh;
+        var lowMl=lowMg/data.mgPerMl;
+        var highMl=highMg/data.mgPerMl;
+        txt='Weight-based helper: '+lowMg.toFixed(0)+'–'+highMg.toFixed(0)+'mg per dose ≈ '+lowMl.toFixed(1)+'–'+highMl.toFixed(1)+'ml per dose. '+data.note;
+        if(!dose.value){
+          dose.value=lowMl.toFixed(1)+'–'+highMl.toFixed(1)+'ml';
+        }
+      }else{
+        txt='Enter weight to calculate estimated pediatric dose range. '+data.note;
+      }
+    }else{
+      txt=data.suggestion;
+      if(!dose.value){
+        if(med==='Paracetamol'||med==='Panadol') dose.value='500mg';
+        if(med==='Ibuprofen') dose.value='200–400mg';
+        if(med==='Salofalk'||med==='Pentasa') dose.value='as prescribed';
+        if(med==='Oralit'||med==='Pedialyte') dose.value='small frequent sips';
+      }
+    }
+
+    box.textContent=txt+' This is a tracking helper, not medical advice.';
+  }
+
+  function init(){
+    $('date').value=fmt(new Date());
+    $('profileMode').addEventListener('change',function(){ $('customSymptomsWrap').classList.toggle('hidden',$('profileMode').value!=='Custom'); });
+    $('createProfileBtn').addEventListener('click',createProfile);
+    $('loadDemoBtn').addEventListener('click',loadDemoProfiles);
+    $('switchProfileBtn').addEventListener('click',backToProfiles);
+    $('trackerForm').addEventListener('submit',saveEntry);
+    $('exportBtn').addEventListener('click',exportCSV);
+    $('clearProfileBtn').addEventListener('click',clearProfile);
+    $('meds').addEventListener('change',doseSuggest);
+    $('weightInput').addEventListener('input',doseSuggest);
+    $('addCustomSymptomBtn').addEventListener('click',addCustomSymptom);
+    $('addEventBtn').addEventListener('click',addPendingEvent);
+    var taab=$('trackerAllergyAddBtn'); if(taab) taab.addEventListener('click',addTrackerAllergy);
+    var tai=$('trackerAllergyInput'); if(tai) tai.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); addTrackerAllergy(); } });
+    var eapb=$('editActiveProfileBtn'); if(eapb) eapb.addEventListener('click',function(){ var id=activeId(); if(id) openEditProfile(id); });
+    var epsb=$('editProfileSaveBtn'); if(epsb) epsb.addEventListener('click',saveEditProfile);
+    var epcb=$('editProfileCancelBtn'); if(epcb) epcb.addEventListener('click',closeEditProfile);
+    var eaab=$('editAllergyAddBtn'); if(eaab) eaab.addEventListener('click',addEditAllergy);
+    var eai=$('editAllergyInput'); if(eai) eai.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); addEditAllergy(); } });
+    var spsel=$('summaryPeriod'); if(spsel) spsel.addEventListener('change',function(){ var p=activeProfile(); if(p) render(); });
+    $('cookSuggestionBtn').addEventListener('click',function(){
+      recentCookSuggestionMemory=[];
+      generateCookingSuggestions();
+    });
+
+    $('rerollCookSuggestionBtn').addEventListener('click',generateCookingSuggestions);
+
+    $('rerollFoodSuggestionBtn').addEventListener('click',function(){
+      try{
+        var p=activeProfile();
+        if(!p){ return; }
+        renderFoodSuggestions(p.entries||[],p);
+      }catch(err){
+        console.error('Food suggestion reroll failed:',err);
+        $('foodSuggestions').innerHTML='<div style="background:#fff0ef;border-radius:14px;padding:14px;">😭 Failed to generate another suggestion. Please try again.</div>';
+      }
+    });
+    $('checkRestaurantFoodBtn').addEventListener('click',analyzeRestaurantFood);
+
+    document.body.addEventListener('click',function(ev){var t=ev.target; if(t.dataset.open){setActive(t.dataset.open); openTracker();} if(t.dataset.edit){openEditProfile(t.dataset.edit);} if(t.dataset.delete){deleteProfile(t.dataset.delete);} if(t.dataset.delEntry){deleteEntry(t.dataset.delEntry);} if(t.dataset.removeEvent!==undefined){removePendingEvent(Number(t.dataset.removeEvent));} if(t.dataset.food){showFood(t.dataset.food);} });
+    renderProfiles();
+    backToProfiles();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+```html
+
+```
+
+
+
+
+<!-- ============ HEALTH ASSISTANT (offline, per-profile) ============ -->
+<style>
+#healthAssistantBtn{
+  position:fixed; bottom:22px; right:22px; z-index:99999;
+  background:linear-gradient(135deg,#5b6f5b,#7ea87e);
+  color:white; border:none; border-radius:999px;
+  padding:14px 20px; font-weight:700; font-size:14px; cursor:pointer;
+  box-shadow:0 10px 28px rgba(0,0,0,.22); display:none;
+  animation:pulseGlow 2.6s infinite;
+}
+@keyframes pulseGlow{0%{transform:scale(1);}50%{transform:scale(1.04);}100%{transform:scale(1);}}
+#healthAssistant{
+  position:fixed; bottom:90px; right:22px; width:392px; max-width:calc(100vw - 28px);
+  height:592px; max-height:calc(100vh - 120px);
+  background:white; border-radius:24px; overflow:hidden; display:none;
+  flex-direction:column; z-index:99999; box-shadow:0 18px 48px rgba(0,0,0,.24);
+}
+#assistantHeader{
+  background:linear-gradient(135deg,#5b6f5b,#7ea87e);
+  color:white; padding:14px 16px; display:flex;
+  justify-content:space-between; align-items:center; font-weight:700; font-size:14px;
+}
+#assistantProfileLabel{ font-size:11px; opacity:.85; margin-top:3px; font-weight:500; }
+#assistantClose{ background:transparent;border:none;color:white;font-size:22px;cursor:pointer;line-height:1; }
+#assistantMessages{ flex:1;overflow:auto;padding:14px;background:#f6f8f6; }
+.aiBubble{
+  background:white; padding:12px 14px; border-radius:16px; margin-bottom:10px;
+  line-height:1.6; box-shadow:0 2px 8px rgba(0,0,0,.07); font-size:14px; max-width:90%;
+}
+.aiBubble.user{ background:#dceadc; margin-left:auto; }
+#assistantInputWrap{
+  display:flex; gap:8px; padding:12px; border-top:1px solid #e5e7eb; background:white;
+}
+#assistantInput{
+  flex:1; padding:11px; border-radius:14px; border:1px solid #ccc; font-size:14px;
+}
+#assistantSend{
+  background:#5b6f5b; color:white; border:none; border-radius:14px;
+  padding:10px 16px; cursor:pointer; font-weight:bold;
+}
+</style>
+
+<button id="healthAssistantBtn">💬 Ask your health assistant</button>
+<div id="healthAssistant">
+  <div id="assistantHeader">
+    <div>
+      <div>🌿 Health Assistant</div>
+      <div id="assistantProfileLabel">—</div>
+    </div>
+    <button id="assistantClose">×</button>
+  </div>
+  <div id="assistantMessages"></div>
+  <div id="assistantInputWrap">
+    <input id="assistantInput" placeholder="Tanya soal gejala, makanan, meds…" />
+    <button id="assistantSend">Send</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── STORAGE KEYS: must match the core tracker exactly ── */
+var STORAGE_KEY = 'healthTriggerProfiles_v2';
+var ACTIVE_KEY  = 'healthTriggerActiveProfile_v2';
+
+/* ── FOOD / RECIPE DATABASE (shared, extensible) ──
+   window.assistantFoodDB lets the "what to eat / cook / can I eat" sections
+   add entries too. Format: name -> {ingredients:[], risks:[]} */
+var BASE_FOOD_DB = {
+  'pesto':            { ingredients:['pine nut','kacang pinus','basil','cheese','olive oil','garlic'], risks:['nut','dairy'] },
+  'pesto pasta':      { ingredients:['pine nut','kacang pinus','basil','cheese','gluten pasta'], risks:['nut','dairy','gluten'] },
+  'carbonara':        { ingredients:['egg','cheese','milk','gluten pasta','bacon'], risks:['egg','dairy','gluten'] },
+  'fettuccine alfredo':{ ingredients:['milk','cream','butter','cheese','gluten pasta'], risks:['dairy','gluten'] },
+  'aglio olio':       { ingredients:['gluten pasta','garlic','olive oil','chili'], risks:['gluten'] },
+  'ramen':            { ingredients:['gluten noodle','egg','soy sauce','fish broth'], risks:['gluten','egg','fish','soy'] },
+  'martabak':         { ingredients:['gluten flour','egg','milk','butter'], risks:['gluten','egg','dairy'] },
+  'oreo milkshake':   { ingredients:['oreo','milk','cream','sugar'], risks:['gluten','dairy'] },
+  'nasi goreng seafood':{ ingredients:['shrimp','udang','fish sauce','egg','soy sauce','rice'], risks:['seafood','shrimp','egg','soy'] },
+  'nasi goreng':      { ingredients:['egg','soy sauce','rice','oil'], risks:['egg','soy'] },
+  'mie goreng':       { ingredients:['gluten noodle','egg','soy sauce','oil'], risks:['gluten','egg','soy'] },
+  'gado gado':        { ingredients:['peanut sauce','kacang','tofu','egg','vegetable'], risks:['peanut','egg','soy'] },
+  'sate':             { ingredients:['peanut sauce','kacang','meat','soy sauce'], risks:['peanut','soy'] },
+  'sate ayam':        { ingredients:['peanut sauce','kacang','chicken','soy sauce'], risks:['peanut','soy'] },
+  'siomay':           { ingredients:['fish paste','peanut sauce','egg','wheat wrapper'], risks:['fish','peanut','egg','gluten'] },
+  'batagor':          { ingredients:['fish','peanut sauce','wheat wrapper','fried'], risks:['fish','peanut','gluten','fried'] },
+  'pempek':           { ingredients:['fish','egg','tapioca','fried'], risks:['fish','egg'] },
+  'bakso':            { ingredients:['beef/fish meatball','gluten noodle','high sodium'], risks:['gluten','high sodium','processed'] },
+  'udang goreng':     { ingredients:['shrimp','udang','oil','flour'], risks:['seafood','shrimp','gluten'] },
+  'shrimp fried rice':{ ingredients:['shrimp','udang','egg','soy sauce','rice'], risks:['seafood','shrimp','egg','soy'] },
+  'shrimp':           { ingredients:['shrimp','udang'], risks:['seafood','shellfish'] },
+  'udang':            { ingredients:['shrimp','udang'], risks:['seafood','shellfish'] },
+  'tom yum':          { ingredients:['shrimp','fish sauce','lime','chili','mushroom'], risks:['seafood','spicy','fish'] },
+  'dragon hot pot':   { ingredients:['seafood','spicy broth','high sodium','processed ingredients'], risks:['seafood','spicy','high sodium'] },
+  'mala':             { ingredients:['numbing spice','chili oil','high oil'], risks:['very spicy','high oil'] },
+  'seblak':           { ingredients:['very spicy','high oil','processed food','egg'], risks:['very spicy','egg','processed'] },
+  'pizza':            { ingredients:['gluten dough','cheese','tomato sauce'], risks:['gluten','dairy','tomato'] },
+  'burger':           { ingredients:['gluten bun','processed meat','cheese','sauce'], risks:['gluten','dairy','processed'] },
+  'croissant':        { ingredients:['butter','milk','gluten flour','egg'], risks:['dairy','gluten','egg'] },
+  'donat':            { ingredients:['gluten flour','egg','milk','sugar','oil'], risks:['gluten','egg','dairy'] },
+  'donut':            { ingredients:['gluten flour','egg','milk','sugar','oil'], risks:['gluten','egg','dairy'] },
+  'oreo':             { ingredients:['wheat flour','cocoa','soy lecithin','sugar'], risks:['gluten','soy'] },
+  'kitkat':           { ingredients:['chocolate','milk','sugar','gluten wafer'], risks:['dairy','gluten','chocolate'] },
+  'coklat':           { ingredients:['cocoa','milk','sugar'], risks:['dairy','chocolate','caffeine'] },
+  'chocolate':        { ingredients:['cocoa','milk','sugar'], risks:['dairy','chocolate','caffeine'] },
+  'nutella':          { ingredients:['hazelnut','cocoa','milk','sugar'], risks:['nut','dairy','chocolate'] },
+  'kopi susu':        { ingredients:['coffee','milk','sugar'], risks:['caffeine','dairy'] },
+  'matcha latte':     { ingredients:['matcha','milk','sugar'], risks:['caffeine','dairy'] },
+  'boba':             { ingredients:['tea','milk','tapioca','sugar'], risks:['dairy','high sugar'] },
+  'milk tea':         { ingredients:['tea','milk','sugar'], risks:['dairy','caffeine','high sugar'] },
+  'es krim':          { ingredients:['milk','cream','sugar','egg'], risks:['dairy','egg','high sugar'] },
+  'ice cream':        { ingredients:['milk','cream','sugar','egg'], risks:['dairy','egg','high sugar'] },
+  'fried chicken':    { ingredients:['chicken','flour','egg','oil'], risks:['gluten','egg','fried'] },
+  'ayam goreng':      { ingredients:['chicken','flour','oil'], risks:['gluten','fried'] },
+  'ayam geprek':      { ingredients:['fried chicken','very spicy chili','oil'], risks:['very spicy','fried','oil'] },
+  'gorengan':         { ingredients:['flour','oil','various'], risks:['gluten','fried','high oil'] },
+  'tempura':          { ingredients:['seafood/vegetable','gluten batter','oil'], risks:['gluten','fried','seafood'] },
+  'karaage':          { ingredients:['chicken','soy sauce','ginger','oil'], risks:['soy','fried'] },
+  'katsu':            { ingredients:['chicken/pork','gluten breadcrumb','egg','oil'], risks:['gluten','egg','fried'] },
+  'cheese':           { ingredients:['milk','dairy'], risks:['dairy','lactose'] },
+  'keju':             { ingredients:['milk','dairy'], risks:['dairy','lactose'] },
+  'milk':             { ingredients:['dairy','lactose'], risks:['dairy','lactose'] },
+  'susu':             { ingredients:['dairy','lactose'], risks:['dairy','lactose'] },
+  'telur':            { ingredients:['egg'], risks:['egg'] },
+  'egg':              { ingredients:['egg'], risks:['egg'] },
+  'kacang':           { ingredients:['peanut/nut'], risks:['peanut','nut'] },
+  'peanut':           { ingredients:['peanut'], risks:['peanut','nut'] },
+  'ikan':             { ingredients:['fish'], risks:['fish'] },
+  'fish':             { ingredients:['fish'], risks:['fish'] },
+  'seafood':          { ingredients:['seafood'], risks:['seafood'] }
+};
+function FOOD_DB(){
+  var db = Object.assign({}, BASE_FOOD_DB);
+  // Pull in recipes defined by the "What should I eat/cook/can I eat" sections.
+  var rib = window.recipeIntelligenceDB || {};
+  Object.keys(rib).forEach(function(name){
+    var r = rib[name] || {};
+    db[String(name).toLowerCase()] = {
+      ingredients: r.ingredients || [],
+      risks: r.risks || []
+    };
+  });
+  // Allow further additions via window.assistantFoodDB.
+  var ext = window.assistantFoodDB || {};
+  Object.keys(ext).forEach(function(name){ db[String(name).toLowerCase()] = ext[name]; });
+  return db;
+}
+function foodEntry(name){
+  var db = FOOD_DB();
+  return db[name] || db[String(name||'').toLowerCase().trim()] || null;
+}
+
+/* ── ALIASES (Indonesian ↔ English) ── */
+var ALIASES = {
+  'udang':'shrimp','ikan':'fish','kacang':'peanut','coklat':'chocolate','cokelat':'chocolate',
+  'susu':'milk','telur':'egg','keju':'cheese','mie':'noodle','bakmi':'noodle','roti':'bread',
+  'ayam':'chicken','sapi':'beef','babi':'pork','kambing':'lamb',
+  'muntah':'vomit','mual':'nausea','gatal':'itch','gatel':'itch',
+  'biduran':'hives','ruam':'rash','diare':'diarrhea','mencret':'diarrhea',
+  'demam':'fever','batuk':'cough','sesak':'breathless','bengkak':'swelling',
+  'sakit':'pain','nyeri':'pain','kram':'cramps','perut':'stomach',
+  'obat':'medicine','makan':'eat','minum':'drink',
+  'alergi':'allergy','reaksi':'reaction','gejala':'symptom',
+  'kapan':'when','terakhir':'last','pernah':'ever',
+  'boleh':'can i','bisa':'can i','aman':'safe',
+  'sering':'often','berapa':'how many','kali':'times',
+  'hari':'day','minggu':'week','bulan':'month',
+  'apakah':'is'
+};
+
+var SYMPTOM_KW = {
+  vomit:    ['vomit','muntah','mual','nausea','throw up','puke'],
+  skin:     ['itch','gatal','gatel','hives','biduran','rash','ruam','swelling','bengkak','itchy'],
+  diarrhea: ['diarrhea','diare','mencret','watery stool','liquid stool','bab cair','loose stool','cair'],
+  fever:    ['fever','demam','suhu','panas'],
+  pain:     ['pain','sakit','nyeri','kram','cramps'],
+  cough:    ['cough','batuk'],
+  breathless:['breathless','sesak','wheezing','shortness of breath']
+};
+
+/* ── UTIL ── */
+function norm(t){
+  var s = String(t||'').toLowerCase().trim();
+  Object.keys(ALIASES).forEach(function(k){ s = s.split(k).join(ALIASES[k]); });
+  return s;
+}
+function getProfiles(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(e){ return []; }
+}
+function getActiveProfile(){
+  var id = localStorage.getItem(ACTIVE_KEY)||'';
+  return getProfiles().find(function(p){ return p.id===id; }) || null;
+}
+function getEntries(){
+  var p = getActiveProfile();
+  if(!p) return [];
+  return (p.entries||[]).slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+}
+function entryFoods(e){
+  return norm([e.breakfast,e.lunch,e.dinner,e.snacks].filter(Boolean).join(' '));
+}
+function entryHasFood(e, food){
+  return entryFoods(e).includes(norm(food));
+}
+function entryHasSymptom(e, type){
+  var kws = SYMPTOM_KW[type]||[];
+  var blob = norm(JSON.stringify({
+    vomiting:e.vomiting||'', skinReaction:e.skinReaction||'', breathing:e.breathing||'',
+    notes:e.notes||'', events:JSON.stringify(e.events||[]), bloodMucus:e.bloodMucus||'',
+    pain:e.pain||'', temperature:e.temperature||''
+  }));
+  // numeric guards
+  if(type==='fever' && Number(e.temperature||0) >= 38) return true;
+  if(type==='diarrhea' && Number(e.stoolCount||0) >= 4) return true;
+  if(type==='pain' && Number(e.pain||0) >= 3) return true;
+  return kws.some(function(k){ return blob.includes(k); });
+}
+function hasAnySymptom(e){
+  if(e.severity==='High'||e.severity==='Medium') return true;
+  return ['vomit','skin','diarrhea','fever','pain'].some(function(t){ return entryHasSymptom(e,t); });
+}
+function plural(n,w){ return n+' '+w+(n===1?'':'s'); }
+function uniq(arr){ return arr.filter(function(v,i){ return arr.indexOf(v)===i; }); }
+
+/* ── CONVERSATION MEMORY ── */
+var mem = { lastFood:null, lastSymptom:null, lastEntries:null };
+function resetMem(){ mem = { lastFood:null, lastSymptom:null, lastEntries:null }; }
+
+/* ── EXTRACTION ── */
+function extractFood(q){
+  var nq = norm(q);
+  var keys = Object.keys(FOOD_DB()).sort(function(a,b){ return b.length-a.length; });
+  for(var i=0;i<keys.length;i++){ if(nq.includes(norm(keys[i]))) return keys[i]; }
+  // dynamic: match logged foods
+  var entries = getEntries();
+  var stop = ['the','and','can','can i','eat','did','gue','aku','saya','apa','yang','safe',
+    'ever','allergy','reaction','symptom','after','because','karena','karna',
+    'when','last','have','has','this','that','with','from','what','does','for'];
+  var words = nq.split(/[\s,?.!;]+/).filter(function(w){ return w.length>2 && stop.indexOf(w)<0; });
+  for(var j=0;j<words.length;j++){
+    if(entries.some(function(e){ return entryFoods(e).includes(words[j]); })) return words[j];
+  }
+  if(words.length) return '__unk__:'+words[0];
+  return null;
+}
+function extractSymptom(q){
+  var nq = norm(q);
+  var order = ['vomit','skin','diarrhea','fever','pain','cough','breathless'];
+  for(var i=0;i<order.length;i++){
+    if(SYMPTOM_KW[order[i]].some(function(k){ return nq.includes(k); })) return order[i];
+  }
+  return null;
+}
+function detectIntent(q){
+  var nq = norm(q);
+  if(/can i.*(eat|drink)|safe to eat|safe|aman/.test(nq) && (extractFood(q))) return 'can_eat';
+  if(/allergy|allergi/.test(nq)) return 'allergy_check';
+  if(/(when|last|tanggal|berapa).*(reaction|vomit|itch|diarrhea|fever|pain|hives|rash)/.test(nq)) return 'last_reaction';
+  if(/(last|when|tanggal|berapa)/.test(nq) && extractSymptom(q)) return 'last_reaction';
+  if(/(when|last|tanggal).*(eat|ate|drink)/.test(nq) && !extractSymptom(q)) return 'last_ate';
+  if(/trigger|pemicu|penyebab|what cause/.test(nq)) return 'triggers';
+  if(/(when|tanggal|date|last)/.test(nq) && !extractFood(q) && !extractSymptom(q) && mem.lastEntries) return 'followup_date';
+  if(/medicine|medication|meds|helped|sembuh|bantu/.test(nq)) return 'medicine';
+  if(/summary|ringkasan|history|riwayat|recap|show|lihat/.test(nq)) return 'summary';
+  if(extractFood(q)) return 'food_query';
+  return 'unknown';
+}
+
+/* ── USER TRIGGER FOODS / CATEGORIES (from history) ── */
+function userTriggerFoods(entries){
+  var foods = [];
+  entries.filter(hasAnySymptom).forEach(function(e){
+    [e.breakfast,e.lunch,e.dinner,e.snacks].filter(Boolean).forEach(function(meal){
+      meal.toLowerCase().split(/,|&|\+|\sdan\s|\sand\s/).forEach(function(f){
+        f=f.trim(); if(f.length>2) foods.push(f);
+      });
+    });
+  });
+  return uniq(foods);
+}
+function userTriggerCategories(entries){
+  // map logged trigger foods -> risk categories using DB
+  var cats = [];
+  userTriggerFoods(entries).forEach(function(f){
+    var db = foodEntry(f);
+    if(db) cats = cats.concat(db.risks);
+    // also direct allergen words
+    ['shrimp','seafood','fish','peanut','nut','dairy','milk','egg','gluten','soy'].forEach(function(a){
+      if(norm(f).includes(a)) cats.push(a);
+    });
+  });
+  // Also include the profile's DECLARED known allergies (per-profile)
+  var declared = (typeof window.getActiveAllergies==='function') ? window.getActiveAllergies() : [];
+  declared.forEach(function(a){
+    var na = norm(a);
+    cats.push(na);
+    var db = foodEntry(na);
+    if(db) cats = cats.concat(db.risks);
+  });
+  return uniq(cats);
+}
+
+/* ── ANSWER ENGINE ── */
+function answer(q){
+  var food = extractFood(q);
+  var sym  = extractSymptom(q) || mem.lastSymptom;
+  var intent = detectIntent(q);
+  var p = getActiveProfile();
+  var entries = getEntries();
+
+  if(food && food.indexOf('__unk__')!==0) mem.lastFood = food;
+  if(sym) mem.lastSymptom = sym;
+
+  if(!p) return 'Belum ada profile aktif. Buka salah satu profile dulu dari layar profil ya.';
+  if(!entries.length) return 'Belum ada data log untuk profile <b>'+esc(p.name)+'</b>. Log beberapa entry dulu, lalu tanya lagi 🙂';
+
+  if(intent==='can_eat'){
+    var fk = food||mem.lastFood;
+    if(!fk||fk.indexOf('__unk__')===0) return 'Makanan apa yang mau dicek? Contoh: <i>"boleh makan pesto?"</i> / <i>"can I eat shrimp?"</i>';
+    return canEat(fk, entries, p);
+  }
+  if(intent==='allergy_check'){
+    var fk2 = food||mem.lastFood;
+    if(!fk2||fk2.indexOf('__unk__')===0) return allergyOverview(entries, p);
+    return allergyCheck(fk2, sym, entries, p);
+  }
+  if(intent==='last_reaction') return lastReaction(food||mem.lastFood, sym||mem.lastSymptom, entries, p);
+  if(intent==='last_ate')      return lastAte(food||mem.lastFood, entries, p);
+  if(intent==='followup_date' && mem.lastEntries && mem.lastEntries.length){
+    var r = mem.lastEntries[0];
+    return '📅 Tanggalnya: <b>'+esc(r.date)+'</b>'
+      + (r.meds?'<br>Obat: '+esc(r.meds):'')
+      + (r.notes?'<br>📝 '+esc(r.notes.substring(0,120)):'');
+  }
+  if(intent==='triggers') return triggerSummary(entries, p);
+  if(intent==='medicine') return medicineAnswer(sym||mem.lastSymptom, entries, p);
+  if(intent==='summary')  return profileSummary(entries, p);
+
+  if(intent==='food_query' || food){
+    var fk3 = food||mem.lastFood;
+    if(!fk3||fk3.indexOf('__unk__')===0){
+      var unk = (fk3||'').replace('__unk__:','');
+      return 'Hmm, "<b>'+esc(unk)+'</b>" gak ketemu di history log kamu. Coba tanya makanan yang pernah dimakan, atau makanan umum (pesto, udang, dll).';
+    }
+    return allergyCheck(fk3, sym, entries, p);
+  }
+  return helpMessage(p);
+}
+
+/* ── CAN I EAT ── */
+function canEat(food, entries, p){
+  var db = foodEntry(food);
+  var exposed = entries.filter(function(e){ return entryHasFood(e,food); });
+  var reactions = exposed.filter(hasAnySymptom);
+  mem.lastEntries = reactions;
+
+  var out='';
+  // ingredient overlap with user's known trigger categories
+  var userCats = userTriggerCategories(entries);
+  var matched = [];
+  if(db){ db.risks.forEach(function(r){ if(userCats.some(function(c){ return norm(c).includes(norm(r))||norm(r).includes(norm(c)); })) matched.push(r); }); }
+  matched = uniq(matched);
+
+  if(reactions.length){
+    var last = reactions[0];
+    out = '⚠️ <b>Sebaiknya hindari '+esc(food)+'.</b><br><br>';
+    out += 'Dari '+plural(exposed.length,'exposure')+' di log, ada <b>'+reactions.length+' reaksi</b> tercatat.<br>';
+    out += 'Reaksi terakhir: <b>'+esc(last.date)+'</b>';
+    var bits=[];
+    if(last.vomiting&&last.vomiting!=='None') bits.push(last.vomiting);
+    if(last.skinReaction&&last.skinReaction!=='None') bits.push(last.skinReaction);
+    if(bits.length) out += ' — '+esc(bits.join(', '));
+    out += '<br><br>';
+  } else if(matched.length){
+    out = '⚠️ <b>Hati-hati dengan '+esc(food)+'.</b><br><br>';
+    out += 'Kamu belum pernah log makan ini, tapi berdasarkan history alergi kamu:<br>';
+    matched.forEach(function(m){ out += '• Kamu pernah reaksi terkait <b>'+esc(m)+'</b>, dan '+esc(food)+' mengandung '+esc(m)+'<br>'; });
+    out += '<br>You might be allergic to '+esc(food)+'. Coba porsi kecil & pantau.<br><br>';
+  } else if(exposed.length){
+    out = '✅ <b>Kelihatannya aman, '+esc(food)+'.</b><br><br>';
+    out += 'Dari '+plural(exposed.length,'log')+', tidak ada reaksi yang tercatat.<br><br>';
+  } else {
+    out = '❓ <b>Belum ada data untuk '+esc(food)+'.</b><br><br>';
+  }
+  if(db){
+    out += '🍽️ <b>'+esc(food)+' biasanya mengandung:</b><br>'+db.ingredients.map(function(i){ return '• '+esc(i); }).join('<br>');
+    if(db.risks.length) out += '<br><br>Kategori risiko: '+esc(db.risks.join(', '));
+  }
+  return out;
+}
+
+/* ── ALLERGY CHECK (specific food) ── */
+function allergyCheck(food, sym, entries, p){
+  var exposed = entries.filter(function(e){ return entryHasFood(e,food); });
+  var reactions = sym ? exposed.filter(function(e){ return entryHasSymptom(e,sym); }) : exposed.filter(hasAnySymptom);
+  mem.lastEntries = reactions;
+
+  if(!exposed.length){
+    var db = foodEntry(food);
+    var userCats = userTriggerCategories(entries);
+    var ov=[];
+    if(db){ db.risks.forEach(function(r){ if(userCats.some(function(c){ return norm(c).includes(norm(r))||norm(r).includes(norm(c)); })) ov.push(r); }); }
+    ov=uniq(ov);
+    if(ov.length){
+      return '⚠️ Kamu belum pernah log makan <b>'+esc(food)+'</b>, tapi berdasarkan history:<br>'
+        +'Kamu pernah reaksi terkait <b>'+esc(ov.join(', '))+'</b>'
+        +(db?', dan '+esc(food)+' mengandung itu.':'.')
+        +'<br><br>Ada kemungkinan kamu sensitif terhadap '+esc(food)+'.';
+    }
+    return 'Belum ada log makan <b>'+esc(food)+'</b> di history kamu, jadi belum bisa dianalisa.';
+  }
+  if(!reactions.length){
+    return '✅ Dari <b>'+plural(exposed.length,'log')+'</b> dengan '+esc(food)
+      +', gak ada '+(sym||'reaksi')+' yang tercatat. Tampaknya aman dengan '+esc(food)+'!';
+  }
+  var vom  = reactions.filter(function(e){ return entryHasSymptom(e,'vomit'); });
+  var skin = reactions.filter(function(e){ return entryHasSymptom(e,'skin'); });
+  var dia  = reactions.filter(function(e){ return entryHasSymptom(e,'diarrhea'); });
+  var latest = reactions[0];
+
+  var out = '⚠️ Iya, berdasarkan history log:<br><br>';
+  out += '<b>'+esc(p.name)+'</b> pernah reaksi setelah makan <b>'+esc(food)+'</b>.<br><br>';
+  out += '📊 Dari '+plural(exposed.length,'exposure')+':<br>';
+  if(vom.length)  out += '• Muntah: <b>'+vom.length+'x</b> (terakhir '+esc(vom[0].date)+')<br>';
+  if(skin.length) out += '• Gatal/biduran: <b>'+skin.length+'x</b> (terakhir '+esc(skin[0].date)+')<br>';
+  if(dia.length)  out += '• Diare: <b>'+dia.length+'x</b> (terakhir '+esc(dia[0].date)+')<br>';
+  out += '<br>🗓️ Reaksi terakhir: <b>'+esc(latest.date)+'</b>';
+  if(latest.notes) out += '<br>📝 '+esc(latest.notes.substring(0,120))+(latest.notes.length>120?'…':'');
+  out += '<br><br>Safe exposures (tanpa reaksi): <b>'+(exposed.length-reactions.length)+'</b>';
+  return out;
+}
+
+/* ── ALLERGY OVERVIEW ── */
+function allergyOverview(entries, p){
+  var map={};
+  entries.filter(hasAnySymptom).forEach(function(e){
+    [e.breakfast,e.lunch,e.dinner,e.snacks].filter(Boolean).join(',').split(/,|&|\+|\sdan\s|\sand\s/).forEach(function(f){
+      f=f.trim().toLowerCase(); if(f.length>2) map[f]=(map[f]||0)+1;
+    });
+  });
+  var top = Object.keys(map).sort(function(a,b){ return map[b]-map[a]; }).slice(0,8);
+  if(!top.length) return 'Belum ada reaksi yang tercatat di history <b>'+esc(p.name)+'</b>.';
+  var out = '📋 <b>Makanan yang sering muncul saat ada reaksi</b> ('+esc(p.name)+'):<br><br>';
+  top.forEach(function(f){ out += '• <b>'+esc(f)+'</b> — '+map[f]+'x<br>'; });
+  out += '<br>Tanya spesifik: <i>"gue alergi udang?"</i> atau <i>"kapan terakhir reaksi seafood?"</i>';
+  return out;
+}
+
+/* ── LAST REACTION ── */
+function lastReaction(food, sym, entries, p){
+  var pool = food ? entries.filter(function(e){ return entryHasFood(e,food); }) : entries;
+  var reactions = sym ? pool.filter(function(e){ return entryHasSymptom(e,sym); }) : pool.filter(hasAnySymptom);
+  mem.lastEntries = reactions;
+  if(!reactions.length){
+    return 'Tidak ada reaksi '+(sym||'')+(food?' setelah makan <b>'+esc(food)+'</b>':'')+' yang tercatat.';
+  }
+  var last = reactions[0];
+  var lbl = sym==='vomit'?'muntah':sym==='skin'?'gatal/biduran':sym==='diarrhea'?'diare':sym==='fever'?'demam':sym||'reaksi';
+  var out = '📅 Terakhir '+(food?'reaksi setelah <b>'+esc(food)+'</b>':'reaksi');
+  if(sym) out += ' (<b>'+esc(lbl)+'</b>)';
+  out += ':<br><br><b>'+esc(last.date)+'</b><br>';
+  if(last.vomiting&&last.vomiting!=='None') out += '• Vomiting: '+esc(last.vomiting)+'<br>';
+  if(last.skinReaction&&last.skinReaction!=='None') out += '• Skin: '+esc(last.skinReaction)+'<br>';
+  if(Number(last.pain||0)>0) out += '• Pain: '+esc(last.pain)+'/5<br>';
+  if(Number(last.temperature||0)>37) out += '• Suhu: '+esc(last.temperature)+'°C<br>';
+  if(last.meds) out += '• Obat: '+esc(last.meds)+'<br>';
+  if(last.notes) out += '📝 '+esc(last.notes.substring(0,140))+(last.notes.length>140?'…':'');
+  if(reactions.length>1) out += '<br><br>Total: <b>'+reactions.length+'x</b>';
+  return out;
+}
+
+/* ── LAST ATE ── */
+function lastAte(food, entries, p){
+  if(!food) return 'Makanan apa? Contoh: <i>"kapan terakhir gue makan udang?"</i>';
+  var hits = entries.filter(function(e){ return entryHasFood(e,food); });
+  mem.lastEntries = hits;
+  if(!hits.length) return 'Gak ada log makan <b>'+esc(food)+'</b> di history kamu.';
+  return '📅 Terakhir makan <b>'+esc(food)+'</b>: <b>'+esc(hits[0].date)+'</b><br>Total exposure tercatat: <b>'+hits.length+'</b>';
+}
+
+/* ── TRIGGER SUMMARY ── */
+function triggerSummary(entries, p){
+  var re = entries.filter(hasAnySymptom);
+  if(!re.length) return 'Belum ada entry dengan gejala di history <b>'+esc(p.name)+'</b>.';
+  var c={};
+  re.forEach(function(e){
+    [e.breakfast,e.lunch,e.dinner,e.snacks].filter(Boolean).forEach(function(m){
+      m.toLowerCase().split(/,|&|\+|\sdan\s|\sand\s/).forEach(function(f){ f=f.trim(); if(f.length>2) c[f]=(c[f]||0)+1; });
+    });
+  });
+  var top = Object.keys(c).sort(function(a,b){ return c[b]-c[a]; }).slice(0,7);
+  var out = '📊 <b>Possible triggers untuk '+esc(p.name)+'</b><br><span style="font-size:12px;color:#777;">(makanan di entry yang ada gejala)</span><br><br>';
+  top.forEach(function(f,i){ out += (i+1)+'. <b>'+esc(f)+'</b> — '+c[f]+'x<br>'; });
+  out += '<br>Ini pattern, bukan diagnosis. Tanya per makanan untuk detail.';
+  return out;
+}
+
+/* ── MEDICINE ── */
+function medicineAnswer(sym, entries, p){
+  var rel = sym ? entries.filter(function(e){ return entryHasSymptom(e,sym); }) : entries.filter(function(e){ return e.meds; });
+  var c={};
+  rel.forEach(function(e){ if(e.meds) String(e.meds).split('|').forEach(function(m){ m=m.trim(); if(m) c[m]=(c[m]||0)+1; }); });
+  if(!Object.keys(c).length) return 'Belum ada data obat'+(sym?' untuk '+sym:'')+' di history.';
+  var out = '💊 <b>Obat yang dipakai'+(sym?' saat '+sym:'')+'</b> ('+esc(p.name)+'):<br><br>';
+  Object.keys(c).sort(function(a,b){ return c[b]-c[a]; }).forEach(function(m){ out += '• <b>'+esc(m)+'</b> — '+c[m]+'x<br>'; });
+  return out;
+}
+
+/* ── PROFILE SUMMARY ── */
+function profileSummary(entries, p){
+  var withReaction = entries.filter(hasAnySymptom).length;
+  var high = entries.filter(function(e){ return e.severity==='High'; }).length;
+  var out = '📋 <b>Summary '+esc(p.name)+' ('+esc(p.mode)+')</b><br><br>';
+  out += '• Total entries: <b>'+entries.length+'</b><br>';
+  out += '• Entries dengan gejala: <b>'+withReaction+'</b><br>';
+  out += '• High severity: <b>'+high+'</b><br>';
+  if(entries[0]) out += '• Entry terakhir: <b>'+esc(entries[0].date)+'</b><br>';
+  return out;
+}
+
+/* ── HELP ── */
+function helpMessage(p){
+  return 'Halo! Gue bisa analisa data tracker <b>'+esc(p.name)+'</b>. Coba tanya:<br><br>'
+    +'• <i>"Gue alergi udang gak?"</i><br>'
+    +'• <i>"Kapan terakhir gue muntah karena udang?"</i><br>'
+    +'• <i>"Boleh makan pesto?"</i><br>'
+    +'• <i>"Apa trigger gue?"</i><br>'
+    +'• <i>"Obat apa waktu demam?"</i><br>'
+    +'• <i>"Can I eat shrimp fried rice?"</i> / <i>"show summary"</i>';
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+/* ── DOM WIRING ── */
+var btn=document.getElementById('healthAssistantBtn');
+var panel=document.getElementById('healthAssistant');
+var msgs=document.getElementById('assistantMessages');
+var input=document.getElementById('assistantInput');
+var send=document.getElementById('assistantSend');
+var close=document.getElementById('assistantClose');
+var profileLabel=document.getElementById('assistantProfileLabel');
+
+function addMsg(html,user){
+  var d=document.createElement('div');
+  d.className='aiBubble'+(user?' user':'');
+  d.innerHTML=user?esc(html):html;
+  msgs.appendChild(d);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function updateLabel(){
+  var p=getActiveProfile();
+  profileLabel.innerHTML = p ? '👤 '+esc(p.name)+' &nbsp;•&nbsp; '+esc(p.mode) : 'No active profile';
+}
+function welcome(){
+  if(msgs.innerHTML.trim()) return;
+  var p=getActiveProfile();
+  addMsg('Halo'+(p?' <b>'+esc(p.name)+'</b>':'')+'! 👋 Gue bisa jawab soal history kesehatan kamu.<br><br>'
+    +'Coba: <i>"Gue alergi udang gak?"</i>, <i>"Boleh makan pesto?"</i>, <i>"Kapan terakhir muntah?"</i>, <i>"Apa trigger gue?"</i>');
+}
+
+var lastVisible=null, lastProfileId=null;
+function tick(){
+  var t=document.getElementById('trackerScreen');
+  var visible = t && !t.classList.contains('hidden');
+  if(visible){
+    btn.style.display='block';
+    var p=getActiveProfile();
+    var pid=p?p.id:'';
+    if(pid!==lastProfileId){          // profile switched → reset chat (no data crossover)
+      lastProfileId=pid;
+      msgs.innerHTML='';
+      resetMem();
+      welcome();
+    }
+    updateLabel();
+  } else {
+    btn.style.display='none';
+    panel.style.display='none';
+    lastProfileId=null;
+  }
+  lastVisible=visible;
+}
+
+btn.onclick=function(){
+  panel.style.display = panel.style.display==='flex'?'none':'flex';
+  if(panel.style.display==='flex') welcome();
+};
+close.onclick=function(){ panel.style.display='none'; };
+function doSend(){
+  var q=input.value.trim(); if(!q) return;
+  addMsg(q,true); input.value='';
+  setTimeout(function(){ addMsg(answer(q),false); },160);
+}
+send.onclick=doSend;
+input.addEventListener('keydown',function(e){ if(e.key==='Enter') doSend(); });
+
+setInterval(tick,700);
+tick();
+
+})();
+</script>
+
+
+<section style="margin:28px auto;max-width:1100px;background:#fff;border-radius:24px;padding:28px;">
+<h2 style="margin-top:0;">🍽️ What should I eat & cook?</h2>
+
+<p>Recipe suggestions based on known ingredients and possible trigger categories.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+
+<div style="padding:18px;border-radius:18px;background:#f8fafc;">
+<h3>✅ Safer Ideas</h3>
+<ul>
+<li>Chicken soup</li>
+<li>Plain rice + egg</li>
+<li>Banana oatmeal</li>
+<li>Porridge</li>
+<li>Fish soup</li>
+</ul>
+</div>
+
+<div style="padding:18px;border-radius:18px;background:#fff7ed;">
+<h3>⚠️ Watch Ingredients</h3>
+<ul>
+<li>Pesto pasta → nuts</li>
+<li>Carbonara → dairy/gluten</li>
+<li>Seafood fried rice → shrimp/fish</li>
+<li>Martabak → gluten/dairy</li>
+<li>Ramen → gluten</li>
+</ul>
+</div>
+
+<div style="padding:18px;border-radius:18px;background:#eff6ff;">
+<h3>💬 Can I eat this?</h3>
+<p>Ask the assistant things like:</p>
+<ul>
+<li>Can I eat pesto pasta?</li>
+<li>Kalau nasi goreng seafood?</li>
+<li>What ingredients are risky in carbonara?</li>
+</ul>
+</div>
+
+</div>
+</section>
+
+<script>
+window.recipeIntelligenceDB = {
+  "pesto pasta": {
+    "cuisine": "Italian",
+    "ingredients": [
+      "gluten pasta",
+      "basil",
+      "garlic",
+      "olive oil",
+      "parmesan cheese",
+      "pine nuts"
+    ],
+    "risks": [
+      "gluten",
+      "dairy",
+      "tree nuts",
+      "garlic"
+    ],
+    "tips": [
+      "ask for nut-free pesto",
+      "use gluten-free pasta"
+    ]
+  },
+  "carbonara": {
+    "cuisine": "Italian",
+    "ingredients": [
+      "spaghetti",
+      "egg",
+      "parmesan",
+      "pecorino",
+      "guanciale/bacon",
+      "black pepper"
+    ],
+    "risks": [
+      "gluten",
+      "egg",
+      "dairy",
+      "high fat"
+    ],
+    "tips": [
+      "avoid if egg/dairy sensitive"
+    ]
+  },
+  "nasi goreng seafood": {
+    "cuisine": "Indonesian",
+    "ingredients": [
+      "rice",
+      "shrimp",
+      "fish sauce",
+      "soy sauce",
+      "egg",
+      "garlic",
+      "oil"
+    ],
+    "risks": [
+      "shellfish",
+      "fish",
+      "soy/gluten",
+      "egg",
+      "garlic"
+    ],
+    "tips": [
+      "ask no seafood/no egg/no soy sauce"
+    ]
+  },
+  "pad thai": {
+    "cuisine": "Thai",
+    "ingredients": [
+      "rice noodles",
+      "shrimp",
+      "egg",
+      "peanut",
+      "fish sauce",
+      "tamarind"
+    ],
+    "risks": [
+      "shellfish",
+      "egg",
+      "peanut",
+      "fish sauce"
+    ],
+    "tips": [
+      "ask no peanut/no shrimp"
+    ]
+  },
+  "ramen": {
+    "cuisine": "Japanese",
+    "ingredients": [
+      "wheat noodles",
+      "egg",
+      "soy sauce",
+      "broth",
+      "garlic"
+    ],
+    "risks": [
+      "gluten",
+      "egg",
+      "soy",
+      "garlic"
+    ],
+    "tips": [
+      "choose mild broth"
+    ]
+  },
+  "martabak manis": {
+    "cuisine": "Indonesian",
+    "ingredients": [
+      "wheat flour",
+      "egg",
+      "milk",
+      "butter",
+      "chocolate",
+      "nuts"
+    ],
+    "risks": [
+      "gluten",
+      "egg",
+      "dairy",
+      "tree nuts",
+      "chocolate"
+    ],
+    "tips": [
+      "avoid nut/chocolate topping if sensitive"
+    ]
+  },
+  "tom yum": {
+    "cuisine": "Thai",
+    "ingredients": [
+      "shrimp",
+      "fish sauce",
+      "lime",
+      "chili",
+      "mushroom"
+    ],
+    "risks": [
+      "shellfish",
+      "fish",
+      "spicy",
+      "acidic"
+    ],
+    "tips": [
+      "avoid shrimp/fish sauce if sensitive"
+    ]
+  },
+  "gado gado": {
+    "cuisine": "Indonesian",
+    "ingredients": [
+      "peanut sauce",
+      "vegetables",
+      "egg",
+      "tofu",
+      "soy sauce"
+    ],
+    "risks": [
+      "peanut",
+      "egg",
+      "soy"
+    ],
+    "tips": [
+      "ask no peanut sauce"
+    ]
+  },
+  "siomay": {
+    "cuisine": "Indonesian",
+    "ingredients": [
+      "fish paste",
+      "peanut sauce",
+      "egg",
+      "wheat/tapioca wrapper"
+    ],
+    "risks": [
+      "fish",
+      "peanut",
+      "egg",
+      "gluten"
+    ],
+    "tips": [
+      "avoid if fish/peanut sensitive"
+    ]
+  },
+  "oreo": {
+    "cuisine": "Snack",
+    "ingredients": [
+      "wheat flour",
+      "cocoa",
+      "soy lecithin",
+      "sugar"
+    ],
+    "risks": [
+      "gluten",
+      "soy",
+      "chocolate"
+    ],
+    "tips": [
+      "watch gluten/soy sensitivity"
+    ]
+  }
+};
+</script>
+
+
+
+<!-- PER-PROFILE KNOWN ALLERGIES (helper) -->
+<style>
+.allergy-tags{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.allergy-tag{
+  display:inline-flex; align-items:center; gap:8px;
+  background:#fee2e2; color:#991b1b; font-weight:600; font-size:13px;
+  padding:8px 12px; border-radius:10px;
+}
+.allergy-tag button{
+  background:transparent; border:none; color:#991b1b; font-weight:bold;
+  font-size:15px; cursor:pointer; line-height:1; padding:0;
+}
+.allergy-input-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.allergy-input-row input{ flex:1; min-width:220px; }
+#allergyInfoCard{
+  background:#fff7f6; border:1px solid #f0c8c4; border-radius:14px;
+  padding:13px 15px; margin-bottom:12px;
+}
+#allergyInfoCard .ai-title{ font-weight:700; color:#7a2222; margin-bottom:6px; font-size:14px; }
+</style>
+<script>
+(function(){
+  'use strict';
+  var STORAGE_KEY='healthTriggerProfiles_v2';
+  var ACTIVE_KEY='healthTriggerActiveProfile_v2';
+  function getProfiles(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(e){ return []; } }
+  function saveProfiles(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+  function activeId(){ return localStorage.getItem(ACTIVE_KEY)||''; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  // Parse free text separated by commas -> clean lowercase list (deduped)
+  window.parseAllergyInput = function(text){
+    return String(text||'')
+      .split(',')
+      .map(function(x){ return x.trim().toLowerCase(); })
+      .filter(Boolean);
+  };
+
+  // Render tag boxes into a container. removeCb(item) is called on "×".
+  window.renderAllergyTags = function(container, list, removeCb){
+    if(!container) return;
+    container.innerHTML='';
+    if(!list || !list.length){
+      container.innerHTML='<span class="small" style="color:#999;">No allergies added yet.</span>';
+      return;
+    }
+    list.forEach(function(item){
+      var tag=document.createElement('span');
+      tag.className='allergy-tag';
+      tag.innerHTML='<span>⚠️ '+esc(item)+'</span>';
+      if(removeCb){
+        var btn=document.createElement('button');
+        btn.type='button';
+        btn.textContent='×';
+        btn.onclick=function(){ removeCb(item); };
+        tag.appendChild(btn);
+      }
+      container.appendChild(tag);
+    });
+  };
+
+  // Persist allergies onto a specific profile id
+  window.setProfileAllergies = function(profileId, list){
+    var profs=getProfiles();
+    var p=profs.find(function(x){ return x.id===profileId; });
+    if(!p) return;
+    p.allergies=list.slice();
+    saveProfiles(profs);
+  };
+  window.getProfileAllergies = function(profileId){
+    var p=getProfiles().find(function(x){ return x.id===profileId; });
+    return (p && Array.isArray(p.allergies)) ? p.allergies : [];
+  };
+  window.getActiveAllergies = function(){
+    return window.getProfileAllergies(activeId());
+  };
+})();
+</script>
+
+
+<!-- V64 ADAPTIVE MEDICAL FORMS - HIDDEN -->
+<style id="adaptiveStyle" style="display:none;">
+.adaptive-panel{
+  margin-top:14px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  padding:16px;
+}
+.adaptive-panel h3{margin-top:0;}
+.adaptive-chip-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:10px 0 14px;
+}
+.adaptive-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:9px 12px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#1e3a8a;
+  font-size:13px;
+  font-weight:700;
+}
+.adaptive-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+.adaptive-hidden{display:none!important;}
+</style>
+
+<script>
+(function(){
+// V64 ADAPTIVE MEDICAL PANEL - DISABLED
+// ensureAdaptivePanel, toggleAdaptive, collectAdaptiveNotes all stubbed out
+
+function qs(id){return document.getElementById(id);}
+function profileModeNow(){ return ""; }
+function ensureAdaptivePanel(){ return; }
+function toggleAdaptive(){ return; }
+function collectAdaptiveNotes(){ return ""; }
+function selectedValues(){ return []; }
+
+// form submit listener stub - does nothing
+document.addEventListener("submit", function(e){
+  if(e.target && e.target.id === "trackerForm"){
+    // adaptive notes disabled
+  }
+}, true);
+
+// interval stub
+setInterval(function(){ /* adaptive disabled */ }, 99999);
+
+})();
+</script>
+
+
+<!-- V66.1 SAFE SEPARATED PROFILE SCHEMAS -->
+<script>
+(function(){
+
+function detectProfileType(profile){
+
+if(profile.type) return profile.type;
+
+const name = String(profile.name || "").toLowerCase();
+
+if(name.includes("allergy")) return "Allergy";
+if(name.includes("sick")) return "Sick";
+if(name.includes("ibd")) return "IBD";
+
+return "General";
+}
+
+function migrateSchemas(){
+
+const raw = localStorage.getItem("health_tracker_stable_v1");
+
+if(!raw) return;
+
+let profiles = [];
+
+try{
+profiles = JSON.parse(raw);
+}catch(e){
+return;
+}
+
+let changed = false;
+
+profiles.forEach(profile=>{
+
+const type = detectProfileType(profile);
+
+profile.type = type;
+
+if(!profile.ibdEntries) profile.ibdEntries = [];
+if(!profile.allergyEntries) profile.allergyEntries = [];
+if(!profile.sickEntries) profile.sickEntries = [];
+
+if(Array.isArray(profile.entries) && profile.entries.length){
+
+profile.entries.forEach(entry=>{
+
+if(type === "IBD"){
+
+profile.ibdEntries.push({
+date: entry.date || "",
+foods:{
+breakfast: entry.breakfast || "",
+lunch: entry.lunch || "",
+dinner: entry.dinner || "",
+snacks: entry.snacks || ""
+},
+medications: entry.meds || "",
+gi:{
+stoolType: entry.stoolType || "",
+frequency: entry.frequency || "",
+urgency: entry.urgency || "",
+bloodMucus: entry.bloodMucus || "",
+abdominalPain: entry.abdominalPain || ""
+},
+notes: entry.notes || "",
+severity: entry.severity || ""
+});
+
+}
+
+else if(type === "Allergy"){
+
+profile.allergyEntries.push({
+date: entry.date || "",
+foods:{
+breakfast: entry.breakfast || "",
+lunch: entry.lunch || "",
+dinner: entry.dinner || "",
+snacks: entry.snacks || ""
+},
+medications: entry.meds || "",
+reaction:{
+skinReaction: entry.skinReaction || "",
+vomiting: entry.vomiting || "",
+rashType: entry.rashType || "",
+itchSeverity: entry.itchSeverity || "",
+spreadTimeline: entry.spreadTimeline || "",
+breathingSymptoms: entry.breathingSymptoms || ""
+},
+notes: entry.notes || "",
+severity: entry.severity || ""
+});
+
+}
+
+else if(type === "Sick"){
+
+profile.sickEntries.push({
+date: entry.date || "",
+medications: entry.meds || "",
+symptoms:{
+fever: entry.fever || "",
+cough: entry.cough || "",
+mucusColor: entry.mucusColor || "",
+rashProgression: entry.rashProgression || "",
+vomiting: entry.vomiting || "",
+diarrhea: entry.diarrhea || ""
+},
+foods:{
+breakfast: entry.breakfast || "",
+lunch: entry.lunch || "",
+dinner: entry.dinner || "",
+snacks: entry.snacks || ""
+},
+notes: entry.notes || "",
+severity: entry.severity || ""
+});
+
+}
+
+});
+
+profile.entriesBackup = profile.entries;
+profile.entries = [];
+changed = true;
+
+}
+
+});
+
+if(changed){
+
+localStorage.setItem(
+"health_tracker_stable_v1",
+JSON.stringify(profiles)
+);
+
+console.log("V66.1 SAFE schema migration completed");
+}
+
+}
+
+window.getCurrentProfileEntries = function(profile){
+
+if(!profile) return [];
+
+const type = profile.type || detectProfileType(profile);
+
+if(type === "IBD") return profile.ibdEntries || [];
+if(type === "Allergy") return profile.allergyEntries || [];
+if(type === "Sick") return profile.sickEntries || [];
+
+return [];
+};
+
+window.getCurrentProfileType = detectProfileType;
+
+setTimeout(migrateSchemas,1000);
+
+})();
+</script>
+
+
+<section style="margin:28px auto;max-width:1100px;background:#fff;border-radius:24px;padding:28px;">
+<h2 style="margin-top:0;">🧠 Profile Intelligence Architecture</h2>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+
+<div style="padding:18px;border-radius:18px;background:#eff6ff;">
+<h3>IBD Schema</h3>
+<ul>
+<li>Stool type</li>
+<li>Urgency</li>
+<li>Blood/mucus</li>
+<li>Abdominal pain</li>
+<li>Flare tracking</li>
+</ul>
+</div>
+
+<div style="padding:18px;border-radius:18px;background:#fef3c7;">
+<h3>Allergy Schema</h3>
+<ul>
+<li>Rash progression</li>
+<li>Itch severity</li>
+<li>Swelling</li>
+<li>Breathing symptoms</li>
+<li>GI reactions (conditional)</li>
+</ul>
+</div>
+
+<div style="padding:18px;border-radius:18px;background:#fee2e2;">
+<h3>Sick Schema</h3>
+<ul>
+<li>Fever progression</li>
+<li>Cough severity</li>
+<li>Mucus color</li>
+<li>Rash spread timeline</li>
+<li>Medication timing</li>
+</ul>
+</div>
+
+</div>
+</section>
+
+
+<script>
+(function(){
+  // "Daily Symptoms & Events" (seamless) is INTENTIONALLY DISABLED.
+  // Only the "Real-time Events" panel is used to avoid double symptom entry.
+  function removeSeamless(){
+    var card = document.getElementById('seamlessV66Card');
+    if(card && card.parentNode) card.parentNode.removeChild(card);
+  }
+  // run a few times in case it was injected by an older cached build, then stop
+  var n = 0;
+  var iv = setInterval(function(){
+    removeSeamless();
+    if(++n > 8) clearInterval(iv);
+  }, 500);
+  removeSeamless();
+})();
+</script>
+
+</body>
+</html>
